@@ -6,10 +6,14 @@ import { renderUploadPage } from './pages/upload.js';
 import { renderRoutePage } from './pages/route.js';
 import { renderProfilePage } from './pages/profile.js';
 
-const app = document.getElementById('app');
+let app = null;
 
 export const router = {
   navigate(page, params = {}) {
+    if (!app) {
+      app = document.getElementById('app');
+    }
+
     app.innerHTML = '';
 
     switch (page) {

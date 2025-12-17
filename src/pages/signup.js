@@ -70,6 +70,10 @@ async function handleSignup(e) {
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
 
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+  console.log(supabaseKey);
+
   try {
     const { error } = await supabase.auth.signUp({
       email,

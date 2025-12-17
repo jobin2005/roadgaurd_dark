@@ -15,23 +15,28 @@ async function initializeApp() {
     router.navigate('login');
   }
 
+  let initialized = false;
+
   supabase.auth.onAuthStateChange((event, session) => {
-    (async () => {
-      if (session?.user) {
-        currentUser = session.user;
-        await ensureUserProfile(session.user);
-        router.navigate('dashboard');
-      } else {
-        currentUser = null;
-        router.navigate('login');
-      }
-    })();
+    if (!initialized) {
+      initialized = true;
+      return;
+    }
+
+    if (session?.user) {
+      currentUser = session.user;
+      ensureUserProfile(session.user);
+      router.navigate('dashboard');
+    } else {
+      currentUser = null;
+      router.navigate('login');
+    }
   });
 }
 
 async function ensureUserProfile(user) {
   try {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('user_profiles')
       .select('id')
       .eq('id', user.id)

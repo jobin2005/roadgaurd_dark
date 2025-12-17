@@ -144,6 +144,17 @@ function createRouteForm() {
     font-weight: 600;
   `;
 
+const startButton = document.createElement('button');
+startButton.type = 'button'; 
+startButton.textContent = 'Start Driving';
+startButton.style.cssText = `
+  margin-top: 1rem;
+  padding: 0.75rem;
+  font-weight: 600;
+  width: 100%;
+`;
+
+
   form.appendChild(startLabel);
   form.appendChild(startInput);
   form.appendChild(useGPSBtn);
@@ -151,6 +162,7 @@ function createRouteForm() {
   form.appendChild(destInput);
   form.appendChild(example);
   form.appendChild(submitBtn);
+  form.appendChild(startButton);
 
   return form;
 }
