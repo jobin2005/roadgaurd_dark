@@ -168,6 +168,7 @@ function createDetailsSection() {
   title.textContent = 'Details';
   title.style.marginBottom = '1rem';
 
+  // Description field
   const descField = document.createElement('div');
   descField.style.marginBottom = '1.5rem';
 
@@ -191,35 +192,13 @@ function createDetailsSection() {
   descField.appendChild(descLabel);
   descField.appendChild(descInput);
 
-  const severityField = document.createElement('div');
-  severityField.style.marginBottom = '1.5rem';
-
-  const severityLabel = document.createElement('label');
-  severityLabel.textContent = 'Severity Level';
-  severityLabel.style.cssText = `
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-  `;
-
-  const severitySelect = document.createElement('select');
-  severitySelect.id = 'severity';
-  severitySelect.innerHTML = `
-    <option value="low">Low - Small hole</option>
-    <option value="medium" selected>Medium - Moderate hole</option>
-    <option value="high">High - Large/Dangerous hole</option>
-  `;
-  severitySelect.style.width = '100%';
-
-  severityField.appendChild(severityLabel);
-  severityField.appendChild(severitySelect);
-
+  // Append to section
   section.appendChild(title);
   section.appendChild(descField);
-  section.appendChild(severityField);
 
   return section;
 }
+
 
 function handleImageSelect(event, uploadArea, preview, fileInfo) {
   const files = event.target.files;
