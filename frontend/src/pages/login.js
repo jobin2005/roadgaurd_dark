@@ -20,7 +20,7 @@ export function renderLoginPage(container) {
         padding: 2rem;
         box-shadow: 0 20px 25px rgba(0, 0, 0, 0.3);
       ">
-        <h1 style="text-align: center; margin-bottom: 0.5rem; font-size: 2.5rem;">Indirim</h1>
+        <h1 style="text-align: center; margin-bottom: 0.5rem; font-size: 2.5rem;">RoadGaurd</h1>
         <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">Pothole Detection & Reporting</p>
 
         <form id="loginForm">
