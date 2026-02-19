@@ -20,8 +20,8 @@ export function renderSignupPage(container) {
         padding: 2rem;
         box-shadow: 0 20px 25px rgba(0, 0, 0, 0.3);
       ">
-        <h1 style="text-align: center; margin-bottom: 0.5rem; font-size: 2.5rem;">Indirim</h1>
-        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">Create an Account</p>
+        <h1 style="text-align: center; margin-bottom: 0.5rem; font-size: 2.5rem;">RoadGuard</h1>
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">Join the Community</p>
 
         <form id="signupForm">
           <div style="margin-bottom: 1rem;">

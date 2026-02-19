@@ -33,7 +33,7 @@ export function renderDashboard(container) {
   `;
 
   const title = document.createElement('h1');
-  title.textContent = 'Welcome to RoadGaurd';
+  title.textContent = 'Welcome to RoadGuard';
   title.style.fontSize = '3rem';
   title.style.marginBottom = '0.5rem';
 

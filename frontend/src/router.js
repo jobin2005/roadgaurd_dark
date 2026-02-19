@@ -5,6 +5,7 @@ import { renderMapPage } from './pages/map.js';
 import { renderUploadPage } from './pages/upload.js';
 import { renderRoutePage } from './pages/route.js';
 import { renderProfilePage } from './pages/profile.js';
+import { renderJourneyPage } from './pages/journey.js';
 
 let app = null;
 
@@ -37,6 +38,9 @@ export const router = {
         break;
       case 'profile':
         renderProfilePage(app);
+        break;
+      case 'journey':
+        renderJourneyPage(app);
         break;
       default:
         renderLoginPage(app);

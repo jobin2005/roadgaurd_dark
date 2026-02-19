@@ -21,7 +21,7 @@ export function createNavbar() {
     font-weight: 700;
     cursor: pointer;
   `;
-  logo.textContent = 'RoadGaurd';
+  logo.textContent = 'RoadGuard';
   logo.onclick = () => router.navigate('dashboard');
 
   const links = document.createElement('div');

@@ -3,40 +3,54 @@ import { supabase } from '../services/supabaseClient.js';
 
 export function renderMapPage(container) {
   const app = document.createElement('div');
-  app.style.cssText = `
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  `;
-
+  app.style.cssText = 'display:flex;flex-direction:column;min-height:100vh;';
   app.appendChild(createNavbar());
 
   const content = document.createElement('div');
-  content.style.cssText = `
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
-  `;
+  content.style.cssText = 'flex:1;display:flex;flex-direction:column;padding:1.25rem;gap:1rem;';
 
   const header = document.createElement('h1');
-  header.textContent = 'Map View';
-  header.style.marginBottom = '1rem';
+  header.textContent = '🗺️ Map View';
+  header.style.marginBottom = '0.5rem';
+
+  const mapWrapper = document.createElement('div');
+  mapWrapper.style.cssText = 'flex:1;position:relative;border-radius:1rem;overflow:hidden;border:1px solid var(--border);min-height:600px;';
 
   const mapContainer = document.createElement('div');
   mapContainer.id = 'map';
-  mapContainer.style.cssText = `
-    flex: 1;
-    border-radius: 1rem;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    background: var(--bg-secondary);
-    min-height: 600px;
+  mapContainer.style.cssText = 'width:100%;height:100%;min-height:600px;';
+
+  // Legend
+  const legend = document.createElement('div');
+  legend.style.cssText = `
+    position:absolute; bottom:1.25rem; right:0.75rem; z-index:1000;
+    background:rgba(30,41,59,0.92); border:1px solid var(--border);
+    border-radius:0.75rem; padding:0.75rem 1rem; font-size:0.82rem;
+    backdrop-filter:blur(8px); pointer-events:none;
+  `;
+  legend.innerHTML = `
+    <p style="margin:0 0 0.5rem 0;font-weight:700;color:var(--text-primary);font-size:0.85rem;">Pothole Severity</p>
+    <div style="display:flex;flex-direction:column;gap:0.35rem;color:var(--text-secondary);">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="width:12px;height:12px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;"></span>
+        High Severity
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;display:inline-block;flex-shrink:0;"></span>
+        Medium Severity
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="width:12px;height:12px;border-radius:50%;background:#3b82f6;display:inline-block;flex-shrink:0;"></span>
+        Your Location
+      </div>
+    </div>
   `;
 
-  content.appendChild(header);
-  content.appendChild(mapContainer);
+  mapWrapper.appendChild(mapContainer);
+  mapWrapper.appendChild(legend);
 
+  content.appendChild(header);
+  content.appendChild(mapWrapper);
   app.appendChild(content);
   container.appendChild(app);
 
@@ -74,13 +88,9 @@ async function getUserLocationAndLoadPotholes() {
 
           if (userMarker) map.removeLayer(userMarker);
           userMarker = L.circleMarker([lat, lon], {
-            radius: 8,
-            fillColor: '#3b82f6',
-            color: '#2563eb',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8
-          }).addTo(map).bindPopup('Your Location');
+            radius: 10, fillColor: '#3b82f6', color: '#fff',
+            weight: 3, opacity: 1, fillOpacity: 1
+          }).addTo(map).bindPopup('<strong>You are here</strong>');
         }
 
         loadPotholes();
@@ -97,9 +107,11 @@ async function getUserLocationAndLoadPotholes() {
 
 async function loadPotholes() {
   try {
+    // Only show active potholes (exclude removed)
     const { data: potholes, error } = await supabase
       .from('potholes')
-      .select('*');
+      .select('*')
+      .neq('status', 'removed');
 
     if (error) throw error;
 
@@ -109,23 +121,20 @@ async function loadPotholes() {
     if (potholes) {
       potholes.forEach(pothole => {
         const color = pothole.severity === 'high' ? '#ef4444' :
-                      pothole.severity === 'medium' ? '#f59e0b' : '#10b981';
+          pothole.severity === 'medium' ? '#f59e0b' : '#10b981';
 
         const marker = L.circleMarker([pothole.latitude, pothole.longitude], {
-          radius: 8,
-          fillColor: color,
-          color: color,
-          weight: 2,
-          opacity: 0.8,
-          fillOpacity: 0.7
+          radius: 9, fillColor: color, color: '#fff',
+          weight: 2, opacity: 1, fillOpacity: 0.85
         }).addTo(map);
 
         const popupContent = `
-          <div style="font-size: 0.9rem; color: var(--text-primary);">
-            <strong>Severity:</strong> ${pothole.severity}<br>
-            <strong>Lat:</strong> ${pothole.latitude.toFixed(4)}<br>
-            <strong>Lon:</strong> ${pothole.longitude.toFixed(4)}<br>
-            <strong>Reported:</strong> ${new Date(pothole.created_at).toLocaleDateString()}
+          <div style="font-size:0.88rem;min-width:160px;">
+            <strong style="color:${color};">${pothole.severity?.toUpperCase() || 'UNKNOWN'} SEVERITY</strong><br><br>
+            <strong>Lat:</strong> ${pothole.latitude?.toFixed(5)}<br>
+            <strong>Lon:</strong> ${pothole.longitude?.toFixed(5)}<br>
+            <strong>Reported:</strong> ${new Date(pothole.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}<br>
+            ${pothole.description ? `<strong>Note:</strong> ${pothole.description}` : ''}
           </div>
         `;
 
