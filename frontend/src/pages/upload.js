@@ -1,5 +1,6 @@
 import { createNavbar } from '../components/navbar.js';
 import { supabase } from '../services/supabaseClient.js';
+
 import { showAlert } from '../components/alert.js';
 
 export function renderUploadPage(container) {
@@ -234,16 +235,18 @@ async function handleUpload(e) {
       return;
     }
 
-    // Get user location
     const userLocation = await getUserLocation();
     if (!userLocation) {
       showAlert('Please enable location access', 'error');
       return;
     }
 
-    // Send image to Flask backend
     const predictionFormData = new FormData();
     predictionFormData.append('image', imageInput.files[0]);
+    predictionFormData.append('user_id', user.id);
+    predictionFormData.append('latitude', userLocation.latitude);
+    predictionFormData.append('longitude', userLocation.longitude);
+    predictionFormData.append('description', description);
 
     const response = await fetch('http://localhost:8000/predict', {
       method: 'POST',
@@ -253,56 +256,25 @@ async function handleUpload(e) {
     const predictionData = await response.json();
     if (!response.ok) throw new Error(predictionData.error || 'Prediction failed');
 
-    // Show result to user
-    showAlert(`Prediction: ${predictionData.result} (Confidence: ${(predictionData.confidence * 100).toFixed(1)}%)`, 
-              predictionData.result === 'Pothole' ? 'success' : 'info');
+    showAlert(
+      `Prediction: ${predictionData.result} (${(predictionData.confidence * 100).toFixed(1)}%)`,
+      predictionData.result === 'Pothole' ? 'success' : 'info'
+    );
 
-    // Only store in DB if it's a pothole
     if (predictionData.result !== 'Pothole') return;
 
-    // Upload image to Supabase storage
-    const fileExt = imageInput.files[0].name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const { data: storageData, error: uploadError } = await supabase.storage
-      .from('pothole-images')
-      .upload(`${user.id}/${fileName}`, imageInput.files[0]);
-    if (uploadError) throw uploadError;
+    showAlert("Pothole Reported successfully.. Thank you for your contribution", "success");
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('pothole-images')
-      .getPublicUrl(`${user.id}/${fileName}`);
-
-    // Insert pothole record
-    const { data: newPothole, error: insertError } = await supabase
-      .from('potholes')
-      .insert({
-        user_id: user.id,
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
-        severity: predictionData.severity || 'medium',
-        image_url: publicUrl,
-        description,
-        verified: false,
-        confidence: predictionData.confidence
-      })
-      .select();
-
-    if (insertError) throw insertError;
-
-    // Increment user contributions
-    await supabase.rpc('increment_contributions', { user_id: user.id });
-
-    showAlert('Pothole reported successfully! Thank you for contributing.', 'success');
-
-    // Reset form & preview
     document.getElementById('uploadForm').reset();
     document.getElementById('imagePreview').style.display = 'none';
 
   } catch (err) {
-    console.error('Upload error:', err);
-    showAlert(err.message || 'Failed to report pothole', 'error');
+    console.error(err);
+    showAlert(err.message || 'Upload failed', 'error');
   }
 }
+
+
 
 
 function getUserLocation() {
@@ -322,3 +294,4 @@ function getUserLocation() {
     }
   });
 }
+
