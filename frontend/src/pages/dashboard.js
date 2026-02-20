@@ -184,7 +184,7 @@ async function loadPotholeAlert() {
         );
 
         const timeToReach = Math.ceil((distance / 50) * 60);
-        showPotholeAlert(timeToReach, distance);
+        //showPotholeAlert(timeToReach, distance);
       }
     }
   } catch (err) {

@@ -6,6 +6,7 @@ import { renderUploadPage } from './pages/upload.js';
 import { renderRoutePage } from './pages/route.js';
 import { renderProfilePage } from './pages/profile.js';
 import { renderJourneyPage } from './pages/journey.js';
+import { renderAdminPage } from './pages/admin.js';
 
 let app = null;
 
@@ -42,6 +43,9 @@ export const router = {
       case 'journey':
         renderJourneyPage(app);
         break;
+      case 'admin':
+         renderAdminPage(app);
+         break;
       default:
         renderLoginPage(app);
     }

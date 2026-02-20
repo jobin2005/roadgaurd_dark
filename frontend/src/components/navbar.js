@@ -43,6 +43,25 @@ export function createNavbar() {
   links.appendChild(uploadBtn);
   links.appendChild(routeBtn);
   links.appendChild(profileBtn);
+
+  const user = window.getCurrentUser();
+  if (user) {
+    supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.role === 'admin') {
+          const adminBtn = createNavButton('🛡️ Admin', () => router.navigate('admin'));
+          adminBtn.style.background = 'rgba(139, 92, 246, 0.2)';
+          adminBtn.style.borderColor = '#8b5cf6';
+          adminBtn.style.color = '#8b5cf6';
+          links.insertBefore(adminBtn, logoutBtn);
+        }
+      });
+  }
+
   links.appendChild(logoutBtn);
 
   nav.appendChild(logo);
