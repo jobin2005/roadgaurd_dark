@@ -104,7 +104,7 @@ def predict():
             {"content-type": "image/jpeg"}
         )
 
-        public_url = supabase.storage.from_("pothole-images").get_public_url(filename)
+        public_url = supabase.storage.from_("Potholes").get_public_url(filename)
 
         # ====== INSERT INTO DATABASE ======
         supabase.table("potholes").insert({
