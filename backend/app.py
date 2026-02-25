@@ -22,7 +22,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load model once at startup
-model = load_model("models/real_pothole_model.h5")
+model = load_model("models/pothole_detector.h5")
 
 IMG_SIZE = 128
 
