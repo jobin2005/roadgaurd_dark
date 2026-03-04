@@ -10,10 +10,10 @@ async function initializeApp() {
 
   if (user) {
     ensureUserProfile(user);
-    router.navigate('dashboard');
-  } else {
-    router.navigate('login');
   }
+
+  // Initialize route from URL, with auth context
+  router.initRoute();
 
   let initialized = false;
 
@@ -26,10 +26,10 @@ async function initializeApp() {
     if (session?.user) {
       currentUser = session.user;
       ensureUserProfile(session.user);
-      router.navigate('dashboard');
+      router.navigate('dashboard', { replace: true });
     } else {
       currentUser = null;
-      router.navigate('login');
+      router.navigate('login', { replace: true });
     }
   });
 }

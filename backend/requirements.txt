@@ -5,3 +5,4 @@ numpy
 supabase 
 dotenv
 tensorflow
+opencv-python-headless

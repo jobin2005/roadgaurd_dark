@@ -1,14 +1,16 @@
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress TF logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
 
+import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
 from PIL import Image
 import io
 from supabase import create_client
-import os
 import uuid
 import math
 from datetime import datetime, timedelta, timezone
@@ -23,6 +25,8 @@ CORS(app)
 
 # Load model once at startup
 model = load_model("models/pothole_detector.h5")
+# Compile to silence "metrics not built" warning
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 IMG_SIZE = 128
 
@@ -34,14 +38,120 @@ def preprocess_image(img):
     return img
 
 
-def classify_severity(confidence):
-    """Convert confidence to severity level"""
-    if confidence < 0.5:
-        return "none"
-    elif confidence < 0.75:
-        return "medium"
-    else:
-        return "high"
+def _default_params():
+    return {
+        "relative_area": 0, "depth_score": 0,
+        "jaggedness": 0, "irregularity": 0,
+        "edge_intensity": 0, "aspect_ratio": 0,
+        "score": 0.1
+    }
+
+
+def extract_and_analyze_pothole(img_cv):
+    """
+    Advanced Pothole Analysis using OpenCV.
+    Ported from test_presence.py
+    """
+    if img_cv is None:
+        return "none", _default_params()
+
+    h, w = img_cv.shape[:2]
+    total_area = h * w
+
+    # 1. CLAHE contrast enhancement
+    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(gray)
+
+    # 2. Gaussian Blur to reduce noise
+    blurred = cv2.GaussianBlur(enhanced, (7, 7), 0)
+
+    # 3. Adaptive Threshold
+    thresh = cv2.adaptiveThreshold(
+        blurred, 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        blockSize=31,
+        C=10
+    )
+
+    # 4. Canny Edge Detection
+    edges = cv2.Canny(blurred, threshold1=30, threshold2=100)
+    edge_kernel = np.ones((3, 3), np.uint8)
+    edges_dilated = cv2.dilate(edges, edge_kernel, iterations=2)
+    combined = cv2.bitwise_or(thresh, edges_dilated)
+
+    # 5. Morphological operations
+    close_kernel = np.ones((9, 9), np.uint8)
+    open_kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, close_kernel)
+    mask = cv2.morphologyEx(mask,    cv2.MORPH_OPEN,  open_kernel)
+
+    # 6. Contour detection
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    if not contours:
+        return "low", _default_params()
+
+    valid_contours = [c for c in contours if cv2.contourArea(c) > 0.005 * total_area]
+    if not valid_contours:
+        return "low", _default_params()
+
+    main_contour = max(valid_contours, key=cv2.contourArea)
+    pothole_area = cv2.contourArea(main_contour)
+
+    # 7. Extract severity parameters
+    relative_area = pothole_area / total_area
+
+    pothole_mask = np.zeros(gray.shape, dtype=np.uint8)
+    cv2.drawContours(pothole_mask, [main_contour], -1, 255, -1)
+    road_mask_inv = cv2.bitwise_not(pothole_mask)
+    mean_inside  = cv2.mean(enhanced, mask=pothole_mask)[0]
+    mean_outside = cv2.mean(enhanced, mask=road_mask_inv)[0]
+    depth_score  = max(0.0, (mean_outside - mean_inside) / 255.0)
+
+    perimeter   = cv2.arcLength(main_contour, True)
+    circularity = (4 * np.pi * pothole_area) / (perimeter ** 2) if perimeter > 0 else 1.0
+    jaggedness  = 1.0 - min(circularity, 1.0)
+
+    x, y, bw, bh = cv2.boundingRect(main_contour)
+    aspect_ratio = min(bw, bh) / max(bw, bh) if max(bw, bh) > 0 else 0
+
+    sobel_x = cv2.Sobel(enhanced, cv2.CV_64F, 1, 0, ksize=3)
+    sobel_y = cv2.Sobel(enhanced, cv2.CV_64F, 0, 1, ksize=3)
+    sobel_combined = np.uint8(np.clip(np.sqrt(sobel_x**2 + sobel_y**2), 0, 255))
+    edge_intensity = cv2.mean(sobel_combined, mask=pothole_mask)[0] / 255.0
+
+    hull = cv2.convexHull(main_contour)
+    hull_area = cv2.contourArea(hull)
+    solidity = pothole_area / hull_area if hull_area > 0 else 1.0
+    irregularity = 1.0 - solidity
+
+    # 8. Weighted severity score
+    score = (
+        0.30 * min(relative_area * 20, 1.0) +
+        0.25 * depth_score +
+        0.15 * jaggedness +
+        0.15 * irregularity +
+        0.10 * edge_intensity +
+        0.05 * aspect_ratio
+    )
+
+    params = {
+        "relative_area":  round(float(relative_area), 4),
+        "depth_score":    round(float(depth_score), 4),
+        "jaggedness":     round(float(jaggedness), 4),
+        "irregularity":   round(float(irregularity), 4),
+        "edge_intensity": round(float(edge_intensity), 4),
+        "aspect_ratio":   round(float(aspect_ratio), 4),
+        "score":          round(float(score), 4)
+    }
+
+    if score < 0.30:   severity = "low"
+    elif score < 0.60: severity = "medium"
+    else:              severity = "high"
+
+    return severity, params
 
 
 def haversine_distance(lat1, lon1, lat2, lon2):
@@ -86,7 +196,6 @@ def predict():
         confidence = float(prediction)
 
         result = "Pothole" if confidence > 0.5 else "No Pothole"
-        severity = classify_severity(confidence)
 
         # If NOT pothole → just return result
         if result == "No Pothole":
@@ -94,6 +203,13 @@ def predict():
                 "result": result,
                 "confidence": confidence
             })
+
+        # ====== ADVANCED SEVERITY ANALYSIS ======
+        # Decode image for OpenCV
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img_cv = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        severity, severity_metrics = extract_and_analyze_pothole(img_cv)
 
         # ====== UPLOAD IMAGE TO SUPABASE STORAGE ======
         filename = f"{user_id}/{uuid.uuid4()}.jpg"
@@ -126,6 +242,7 @@ def predict():
             "result": result,
             "confidence": confidence,
             "severity": severity,
+            "severity_metrics": severity_metrics,
             "stored": True
         })
 
@@ -297,4 +414,4 @@ def get_pothole_status(pothole_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(debug=True, host='0.0.0.0', port=8000)

@@ -71,7 +71,7 @@ export async function renderAdminPage(container) {
       <div style="display:flex;flex-direction:column;min-height:100vh;">
         ${createNavbar().outerHTML}
         <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;padding:2rem;text-align:center;">
-          <div style="font-size:4rem;">🚫</div>
+          <div style="font-size:1.5rem;font-weight:800;color:var(--error);">ACCESS DENIED</div>
           <h2 style="margin:0;">Access Denied</h2>
           <p style="color:var(--text-secondary);">You don't have admin privileges.</p>
         </div>
@@ -82,13 +82,13 @@ export async function renderAdminPage(container) {
 
   // Build shell
   const app = document.createElement('div');
-  app.style.cssText = 'display:flex;flex-direction:column;min-height:100vh;background:var(--bg-primary);';
-  app.appendChild(createNavbar());
+  app.style.cssText = 'display:flex;flex-direction:column;min-height:100vh;background:var(--bg-base);';
+  app.appendChild(createNavbar('admin'));
 
   // Admin header bar
   const adminBar = document.createElement('div');
   adminBar.style.cssText = `
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    background: var(--bg-surface);
     border-bottom: 1px solid var(--border);
     padding: 1rem 1.5rem;
     display: flex; align-items: center; justify-content: space-between;
@@ -96,19 +96,20 @@ export async function renderAdminPage(container) {
   `;
   adminBar.innerHTML = `
     <div style="display:flex;align-items:center;gap:0.75rem;">
-      <span style="font-size:1.5rem;">🛡️</span>
+      <span style="font-size:1rem;font-weight:700;color:var(--accent);">ADMIN</span>
       <div>
-        <div style="font-weight:700;font-size:1.1rem;">Admin Panel</div>
+        <div style="font-weight:600;font-size:1rem;">Admin Panel</div>
         <div style="font-size:0.78rem;color:var(--text-secondary);">Logged in as ${profile.full_name || user.email}</div>
       </div>
     </div>
     <div id="adminTabBar" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-      ${['dashboard','potholes','users'].map(tab => `
+      ${['dashboard', 'potholes', 'users'].map(tab => `
         <button class="adminTab" data-tab="${tab}" style="
-          padding:0.4rem 1rem; border-radius:0.5rem; font-size:0.85rem; font-weight:600; cursor:pointer;
-          border: 1px solid var(--border); transition: all 0.15s;
-          background:${tab === 'dashboard' ? 'var(--accent-primary)' : 'var(--bg-tertiary)'};
-          color:${tab === 'dashboard' ? 'white' : 'var(--text-primary)'};
+          padding:0.4rem 0.85rem; border-radius:var(--radius-s); font-size:0.82rem; font-weight:600; cursor:pointer;
+          border: 1px solid ${tab === 'dashboard' ? 'var(--accent)' : 'var(--border)'}; transition: all 0.2s ease;
+          background:${tab === 'dashboard' ? 'var(--accent)' : 'var(--bg-raised)'};
+          color:${tab === 'dashboard' ? 'white' : 'var(--text-secondary)'};
+          min-height: auto;
         ">${tab.charAt(0).toUpperCase() + tab.slice(1)}</button>
       `).join('')}
     </div>
@@ -128,8 +129,10 @@ export async function renderAdminPage(container) {
     btn.onclick = () => {
       activeTab = btn.dataset.tab;
       adminBar.querySelectorAll('.adminTab').forEach(b => {
-        b.style.background = b.dataset.tab === activeTab ? 'var(--accent-primary)' : 'var(--bg-tertiary)';
-        b.style.color = b.dataset.tab === activeTab ? 'white' : 'var(--text-primary)';
+        b.style.background = b.dataset.tab === activeTab ? 'var(--accent)' : 'var(--bg-raised)';
+        b.style.color = b.dataset.tab === activeTab ? 'white' : 'var(--text-secondary)';
+        b.style.borderColor = b.dataset.tab === activeTab ? 'var(--accent)' : 'var(--border)';
+        b.style.boxShadow = 'none';
       });
       renderActiveTab();
     };
@@ -152,24 +155,24 @@ async function loadAllData() {
 
     // Fetch potholes
     const { data: potholes, error: pErr } = await supabase
-  .from('potholes')
-  .select('*')
-  .order('created_at', { ascending: false });
+      .from('potholes')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-if (pErr) throw pErr;
+    if (pErr) throw pErr;
 
-// Fetch all profiles separately and merge
-const { data: profiles } = await supabase
-  .from('user_profiles')
-  .select('id, full_name, email');
+    // Fetch all profiles separately and merge
+    const { data: profiles } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, email');
 
-const profileMap = {};
-(profiles || []).forEach(p => { profileMap[p.id] = p; });
+    const profileMap = {};
+    (profiles || []).forEach(p => { profileMap[p.id] = p; });
 
-allPotholes = (potholes || []).map(p => ({
-  ...p,
-  user_profiles: profileMap[p.user_id] || null
-}));
+    allPotholes = (potholes || []).map(p => ({
+      ...p,
+      user_profiles: profileMap[p.user_id] || null
+    }));
 
   } catch (err) {
     console.error('Admin data load error:', err);
@@ -220,12 +223,13 @@ function renderDashboard(container) {
     <select id="dashDistrictFilter" style="padding:0.4rem 0.75rem;border-radius:0.5rem;min-width:180px;">
       ${KERALA_DISTRICTS.map(d => `<option value="${d}" ${d === activeFilters.district ? 'selected' : ''}>${d}</option>`).join('')}
     </select>
-    ${!userLocation ? `<span style="font-size:0.8rem;color:var(--text-secondary);">📍 Location unavailable — proximity filter disabled</span>` : `<span style="font-size:0.8rem;color:#10b981;">📍 Location active</span>`}
+    ${!userLocation ? `<span style="font-size:0.8rem;color:var(--text-secondary);">Location unavailable - proximity filter disabled</span>` : `<span style="font-size:0.8rem;color:#10b981;">Location active</span>`}
   `;
   container.appendChild(filterRow);
 
   filterRow.querySelector('#dashDistrictFilter').onchange = (e) => {
     activeFilters.district = e.target.value;
+    container.innerHTML = '';
     renderDashboard(container);
   };
 
@@ -233,9 +237,9 @@ function renderDashboard(container) {
   const filteredResolved = activeFilters.district === 'All Districts'
     ? resolvedPotholes
     : resolvedPotholes.filter(r => {
-        const d = districtCache.get(`${r.latitude?.toFixed(3)},${r.longitude?.toFixed(3)}`);
-        return d && d.toLowerCase().includes(activeFilters.district.toLowerCase());
-      });
+      const d = districtCache.get(`${r.latitude?.toFixed(3)},${r.longitude?.toFixed(3)}`);
+      return d && d.toLowerCase().includes(activeFilters.district.toLowerCase());
+    });
 
   const filteredActive = filtered.filter(p => !p.status || p.status === 'active').length;
   const filteredHigh = filtered.filter(p => p.severity === 'high').length;
@@ -246,20 +250,21 @@ function renderDashboard(container) {
   statsGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;';
 
   const stats = [
-    { label: 'Total Reported', value: filtered.length, icon: '📍', color: '#3b82f6', sub: `of ${total} total` },
-    { label: 'Active', value: filteredActive, icon: '🔴', color: '#ef4444', sub: 'unresolved' },
-    { label: 'Fixed', value: filteredResolved.length, icon: '✅', color: '#10b981', sub: 'resolved' },
-    { label: 'Removed (fake)', value: filtered.filter(p => p.status === 'removed').length, icon: '🗑️', color: '#94a3b8', sub: 'community flagged' },
-    { label: 'High Severity', value: filteredHigh, icon: '⚠️', color: '#f59e0b', sub: 'critical potholes' },
-    { label: 'Encounters', value: filteredViews, icon: '👁️', color: '#8b5cf6', sub: 'journey passages' },
+    { label: 'Total Reported', value: filtered.length, icon: '', color: '#3b82f6', sub: `of ${total} total` },
+    { label: 'Active', value: filteredActive, icon: '', color: '#ef4444', sub: 'unresolved' },
+    { label: 'Fixed', value: filteredResolved.length, icon: '', color: '#10b981', sub: 'resolved' },
+    { label: 'Removed (fake)', value: filtered.filter(p => p.status === 'removed').length, icon: '', color: '#94a3b8', sub: 'community flagged' },
+    { label: 'High Severity', value: filteredHigh, icon: '', color: '#f59e0b', sub: 'critical potholes' },
+    { label: 'Encounters', value: filteredViews, icon: '', color: '#8b5cf6', sub: 'journey passages' },
   ];
 
   stats.forEach(s => {
     const card = document.createElement('div');
     card.style.cssText = `
-      background:var(--bg-secondary); border:1px solid var(--border);
-      border-radius:0.875rem; padding:1.25rem;
+      background: var(--bg-surface); border:1px solid var(--border);
+      border-radius:var(--radius-l); padding:1.25rem;
       border-left: 4px solid ${s.color};
+      transition: all 0.2s ease;
     `;
     card.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -297,10 +302,10 @@ function renderDashboard(container) {
   });
 
   const districtTable = document.createElement('div');
-  districtTable.style.cssText = 'background:var(--bg-secondary);border:1px solid var(--border);border-radius:0.875rem;overflow:hidden;margin-bottom:2rem;';
+  districtTable.style.cssText = 'background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-l);overflow:hidden;margin-bottom:2rem;';
 
   const thead = `
-    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:0.75rem 1rem;background:var(--bg-tertiary);font-size:0.8rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:0.6rem 1rem;background:var(--bg-raised);font-size:0.78rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;">
       <div>District</div><div style="text-align:center;">Total</div><div style="text-align:center;">Active</div><div style="text-align:center;">High</div><div style="text-align:center;">Fixed</div>
     </div>
   `;
@@ -309,7 +314,7 @@ function renderDashboard(container) {
     .sort((a, b) => b[1].total - a[1].total)
     .map(([dist, data], i) => `
       <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:0.75rem 1rem;
-        border-top:1px solid var(--border);font-size:0.88rem;
+        border-top:1px solid rgba(255,255,255,0.06);font-size:0.88rem;
         background:${i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'};">
         <div style="font-weight:600;">${dist}</div>
         <div style="text-align:center;">${data.total}</div>
@@ -334,7 +339,7 @@ function renderDashboard(container) {
   if (recent.length === 0) {
     const empty = document.createElement('p');
     empty.textContent = 'No potholes reported in the last 7 days.';
-    empty.style.color = 'var(--text-secondary)';
+    empty.style.color = '#9A9AA0';
     container.appendChild(empty);
   } else {
     const recentList = document.createElement('div');
@@ -352,12 +357,12 @@ function renderPotholesTab(container) {
   // Filter bar
   const filterBar = document.createElement('div');
   filterBar.style.cssText = `
-    background:var(--bg-secondary); border:1px solid var(--border);
-    border-radius:0.875rem; padding:1rem 1.25rem; margin-bottom:1rem;
+    background: var(--bg-surface); border:1px solid var(--border);
+    border-radius:var(--radius-l); padding:1rem 1.25rem; margin-bottom:1rem;
     display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center;
   `;
   filterBar.innerHTML = `
-    <span style="font-weight:700;font-size:0.9rem;flex-shrink:0;">🔍 Filters</span>
+    <span style="font-weight:700;font-size:0.9rem;flex-shrink:0;">Filters</span>
 
     <select id="fDistrict" style="padding:0.4rem 0.6rem;border-radius:0.5rem;font-size:0.85rem;">
       ${KERALA_DISTRICTS.map(d => `<option value="${d}" ${d === activeFilters.district ? 'selected' : ''}>${d}</option>`).join('')}
@@ -460,9 +465,9 @@ function renderPotholesTab(container) {
     const header = document.createElement('div');
     header.style.cssText = `
       display:grid; grid-template-columns: 60px 100px 120px 130px 160px 1fr 180px;
-      padding:0.6rem 1rem; background:var(--bg-tertiary);
-      border:1px solid var(--border); border-radius:0.75rem 0.75rem 0 0;
-      font-size:0.78rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;
+      padding:0.6rem 1rem; background:var(--bg-raised);
+      border:1px solid var(--border); border-radius:var(--radius-m) var(--radius-m) 0 0;
+      font-size:0.78rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.05em;
       gap:0.5rem;
     `;
     header.innerHTML = `
@@ -472,7 +477,7 @@ function renderPotholesTab(container) {
     listEl.appendChild(header);
 
     const rowsContainer = document.createElement('div');
-    rowsContainer.style.cssText = 'border:1px solid var(--border);border-top:none;border-radius:0 0 0.75rem 0.75rem;overflow:hidden;';
+    rowsContainer.style.cssText = 'border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius-m) var(--radius-m);overflow:hidden;';
 
     data.forEach((p, i) => {
       rowsContainer.appendChild(createPotholeRow(p, false, i + 1));
@@ -490,8 +495,8 @@ function createPotholeRow(p, compact = false, index = null) {
   const statusCfg = p.status === 'removed'
     ? { label: 'Removed', color: '#94a3b8' }
     : p.status === 'fixed'
-    ? { label: 'Fixed', color: '#10b981' }
-    : { label: 'Active', color: '#3b82f6' };
+      ? { label: 'Fixed', color: '#10b981' }
+      : { label: 'Active', color: 'var(--accent)' };
 
   const date = new Date(p.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   const reporterName = p.user_profiles?.full_name || p.user_profiles?.email || p.user_id?.slice(0, 8) + '…';
@@ -503,8 +508,8 @@ function createPotholeRow(p, compact = false, index = null) {
   if (compact) {
     // Compact card for dashboard
     row.style.cssText = `
-      background:var(--bg-secondary); border:1px solid var(--border);
-      border-radius:0.6rem; padding:0.75rem 1rem;
+      background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:var(--radius-m); padding:0.75rem 1rem;
       display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;
     `;
     row.innerHTML = `
@@ -514,17 +519,17 @@ function createPotholeRow(p, compact = false, index = null) {
         <span style="font-size:0.8rem;color:var(--text-secondary);">${date}</span>
       </div>
       <div style="display:flex;gap:0.5rem;align-items:center;">
-        ${distanceText ? `<span style="font-size:0.78rem;color:var(--text-secondary);">📍 ${distanceText}</span>` : ''}
+        ${distanceText ? `<span style="font-size:0.78rem;color:var(--text-secondary);">${distanceText}</span>` : ''}
         ${!isFixed && (!p.status || p.status === 'active')
-          ? `<button class="fixBtn" data-id="${p.id}" data-lat="${p.latitude}" data-lng="${p.longitude}"
+        ? `<button class="fixBtn" data-id="${p.id}" data-lat="${p.latitude}" data-lng="${p.longitude}"
               style="padding:0.3rem 0.7rem;font-size:0.8rem;background:#10b981;border:none;border-radius:0.4rem;color:white;font-weight:600;cursor:pointer;">
-              ✅ Mark Fixed
+              Mark Fixed
             </button>`
-          : `<span style="font-size:0.8rem;color:#10b981;">✅ Fixed</span>`
-        }
+        : `<span style="font-size:0.8rem;color:#10b981;">Fixed</span>`
+      }
         <button class="viewUserBtn" data-userid="${p.user_id}"
-          style="padding:0.3rem 0.7rem;font-size:0.8rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.4rem;cursor:pointer;">
-          👤 Reporter
+          style="padding:0.3rem 0.7rem;font-size:0.8rem;background:#2A2A2E;border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;color:#9A9AA0;">
+          Reporter
         </button>
       </div>
     `;
@@ -534,7 +539,7 @@ function createPotholeRow(p, compact = false, index = null) {
       display:grid; grid-template-columns: 60px 100px 120px 130px 160px 1fr 180px;
       padding:0.65rem 1rem; border-top:1px solid var(--border);
       font-size:0.85rem; align-items:center; gap:0.5rem;
-      transition:background 0.1s;
+      transition:background 0.15s ease;
     `;
     row.onmouseenter = () => row.style.background = 'rgba(255,255,255,0.025)';
     row.onmouseleave = () => row.style.background = 'transparent';
@@ -553,23 +558,23 @@ function createPotholeRow(p, compact = false, index = null) {
       <div style="font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${reporterName}">${reporterName}</div>
       <div style="font-size:0.8rem;color:var(--text-secondary);">
         ${date}
-        ${distanceText ? `<span style="margin-left:0.5rem;color:var(--text-secondary);">· 📍${distanceText}</span>` : ''}
+        ${distanceText ? `<span style="margin-left:0.5rem;color:var(--text-secondary);">· ${distanceText}</span>` : ''}
       </div>
       <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
         ${!isFixed && (!p.status || p.status === 'active')
-          ? `<button class="fixBtn" data-id="${p.id}" data-lat="${p.latitude}" data-lng="${p.longitude}"
+        ? `<button class="fixBtn" data-id="${p.id}" data-lat="${p.latitude}" data-lng="${p.longitude}"
               style="padding:0.25rem 0.55rem;font-size:0.78rem;background:#10b981;border:none;border-radius:0.35rem;color:white;font-weight:600;cursor:pointer;">
-              ✅ Fix
+              Fix
             </button>`
-          : `<span style="font-size:0.75rem;color:#10b981;">✅</span>`
-        }
+        : `<span style="font-size:0.75rem;color:#10b981;">Done</span>`
+      }
         <button class="viewUserBtn" data-userid="${p.user_id}"
-          style="padding:0.25rem 0.55rem;font-size:0.78rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.35rem;cursor:pointer;">
-          👤
+          style="padding:0.25rem 0.55rem;font-size:0.78rem;background:#2A2A2E;border:1px solid rgba(255,255,255,0.06);border-radius:6px;cursor:pointer;color:#9A9AA0;">
+          View
         </button>
         <button class="viewMapBtn" data-lat="${p.latitude}" data-lng="${p.longitude}"
           style="padding:0.25rem 0.55rem;font-size:0.78rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.35rem;cursor:pointer;"
-          title="View on map">🗺️</button>
+          title="View on map">Map</button>
       </div>
     `;
   }
@@ -587,8 +592,8 @@ function createPotholeRow(p, compact = false, index = null) {
       e.stopPropagation();
       activeTab = 'users';
       document.querySelectorAll('.adminTab').forEach(b => {
-        b.style.background = b.dataset.tab === 'users' ? 'var(--accent-primary)' : 'var(--bg-tertiary)';
-        b.style.color = b.dataset.tab === 'users' ? 'white' : 'var(--text-primary)';
+        b.style.background = b.dataset.tab === 'users' ? 'var(--accent)' : 'var(--bg-raised)';
+        b.style.color = b.dataset.tab === 'users' ? 'white' : 'var(--text-secondary)';
       });
       const main = document.getElementById('adminMain');
       main.innerHTML = '';
@@ -615,28 +620,28 @@ function showFixModal(potholeId, lat, lng) {
   const overlay = document.createElement('div');
   overlay.id = 'fixModal';
   overlay.style.cssText = `
-    position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);
-    backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem;
+    position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem;
   `;
 
   const modal = document.createElement('div');
   modal.style.cssText = `
-    background:var(--bg-secondary);border:1px solid var(--border);
-    border-radius:1rem;padding:2rem;max-width:420px;width:100%;
-    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    background:var(--bg-surface);border:1px solid var(--border);
+    border-radius:var(--radius-xl);padding:2rem;max-width:420px;width:100%;
+    box-shadow:var(--shadow-xl);
   `;
   modal.innerHTML = `
-    <h3 style="margin:0 0 0.5rem 0;">✅ Mark as Fixed</h3>
+    <h3 style="margin:0 0 0.5rem 0;">Mark as Fixed</h3>
     <p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1.25rem 0;">
       This will update the pothole status and move it to the resolved archive.
     </p>
     <label style="display:block;margin-bottom:0.5rem;font-weight:500;font-size:0.9rem;">Resolution Notes (optional)</label>
     <textarea id="fixNotes" placeholder="e.g. Road repaired by KSTP on 20 Feb 2026" style="width:100%;min-height:80px;resize:vertical;margin-bottom:1.25rem;"></textarea>
     <div style="display:flex;gap:0.75rem;">
-      <button id="confirmFix" style="flex:1;padding:0.75rem;background:#10b981;border:none;border-radius:0.6rem;color:white;font-weight:700;cursor:pointer;font-size:0.95rem;">
-        ✅ Confirm Fixed
+      <button id="confirmFix" style="flex:1;padding:0.65rem;background:var(--success);border:none;border-radius:var(--radius-s);color:white;font-weight:600;cursor:pointer;font-size:0.9rem;min-height:auto;">
+        Confirm Fixed
       </button>
-      <button id="cancelFix" style="padding:0.75rem 1rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.6rem;cursor:pointer;font-weight:600;">
+      <button id="cancelFix" style="padding:0.65rem 1rem;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-s);cursor:pointer;font-weight:600;color:var(--text-secondary);min-height:auto;">
         Cancel
       </button>
     </div>
@@ -693,7 +698,7 @@ async function markPotholeFixed(potholeId, lat, lng, notes = '') {
     const idx = allPotholes.findIndex(p => p.id === potholeId);
     if (idx !== -1) allPotholes[idx].status = 'fixed';
 
-    showAlert('Pothole marked as fixed! ✅', 'success');
+    showAlert('Pothole marked as fixed!', 'success');
     renderActiveTab();
   } catch (err) {
     console.error('Fix error:', err);
@@ -705,7 +710,7 @@ async function markPotholeFixed(potholeId, lat, lng, notes = '') {
 
 function renderUsersTab(container, preloadUserId = null) {
   const title = document.createElement('h2');
-  title.textContent = '👤 User Profile Viewer';
+  title.textContent = 'User Profile Viewer';
   title.style.cssText = 'margin:0 0 1rem 0;';
   container.appendChild(title);
 
@@ -715,7 +720,7 @@ function renderUsersTab(container, preloadUserId = null) {
   searchRow.innerHTML = `
     <input id="userIdInput" type="text" placeholder="Enter User ID (UUID)…"
       style="flex:1;min-width:280px;" value="${preloadUserId || ''}">
-    <button id="searchUserBtn" style="padding:0.6rem 1.25rem;font-weight:700;">🔍 Search</button>
+    <button id="searchUserBtn" style="padding:0.6rem 1.25rem;font-weight:700;">Search</button>
   `;
   container.appendChild(searchRow);
 
@@ -753,12 +758,12 @@ async function renderUsersList(container) {
     container.appendChild(tableTitle);
 
     const tableWrap = document.createElement('div');
-    tableWrap.style.cssText = 'background:var(--bg-secondary);border:1px solid var(--border);border-radius:0.875rem;overflow:hidden;';
+    tableWrap.style.cssText = 'background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-l);overflow:hidden;';
 
     const thead = `
       <div style="display:grid;grid-template-columns:1fr 1.5fr 80px 80px 160px 100px;
-        padding:0.6rem 1rem;background:var(--bg-tertiary);
-        font-size:0.78rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;gap:0.5rem;">
+        padding:0.6rem 1rem;background:var(--bg-raised);
+        font-size:0.78rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;gap:0.5rem;">
         <div>Name</div><div>Email</div><div style="text-align:center;">Reports</div>
         <div style="text-align:center;">Role</div><div>Joined</div><div>Action</div>
       </div>
@@ -770,21 +775,21 @@ async function renderUsersList(container) {
         <div style="display:grid;grid-template-columns:1fr 1.5fr 80px 80px 160px 100px;
           padding:0.65rem 1rem;border-top:1px solid var(--border);
           font-size:0.85rem;gap:0.5rem;align-items:center;
-          background:${i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'};">
+          background:${i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)'};">
           <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.full_name || '—'}</div>
           <div style="color:var(--text-secondary);font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.email}</div>
-          <div style="text-align:center;font-weight:700;color:var(--accent-primary);">${userReports}</div>
+          <div style="text-align:center;font-weight:700;color:var(--accent);">${userReports}</div>
           <div style="text-align:center;">
             <span style="padding:0.15rem 0.5rem;border-radius:0.3rem;font-size:0.75rem;font-weight:700;
-              background:${u.role === 'admin' ? '#8b5cf622' : 'var(--bg-tertiary)'};
+              background:${u.role === 'admin' ? '#8b5cf622' : 'var(--bg-raised)'};
               color:${u.role === 'admin' ? '#8b5cf6' : 'var(--text-secondary)'};">
               ${u.role || 'user'}
             </span>
           </div>
-          <div style="color:var(--text-secondary);font-size:0.8rem;">${new Date(u.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}</div>
+          <div style="color:var(--text-secondary);font-size:0.8rem;">${new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
           <div>
             <button onclick="document.getElementById('userIdInput').value='${u.id}';document.getElementById('searchUserBtn').click();"
-              style="padding:0.25rem 0.6rem;font-size:0.78rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.35rem;cursor:pointer;">
+              style="padding:0.25rem 0.6rem;font-size:0.78rem;background:#2A2A2E;border:1px solid rgba(255,255,255,0.06);border-radius:6px;cursor:pointer;color:#9A9AA0;">
               View →
             </button>
           </div>
@@ -800,7 +805,7 @@ async function renderUsersList(container) {
 }
 
 async function loadUserProfile(userId, container) {
-  container.innerHTML = '<p style="color:var(--text-secondary);">Loading profile…</p>';
+  container.innerHTML = '<p style="color:#9A9AA0;">Loading profile…</p>';
 
   try {
     const { data: profile } = await supabase
@@ -824,10 +829,10 @@ async function loadUserProfile(userId, container) {
 
     const card = document.createElement('div');
     card.style.cssText = `
-      background:var(--bg-secondary);border:1px solid var(--border);
-      border-radius:0.875rem;padding:1.5rem;margin-bottom:1.5rem;
+      background:rgba(26,26,29,0.65);border:1px solid rgba(255,255,255,0.06);
+      border-radius:14px;padding:1.5rem;margin-bottom:1.5rem;
       display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:start;
-      flex-wrap:wrap;
+      flex-wrap:wrap;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
     `;
 
     const userPotholes = potholes || [];
@@ -836,30 +841,31 @@ async function loadUserProfile(userId, container) {
     const highCount = userPotholes.filter(p => p.severity === 'high').length;
 
     card.innerHTML = `
-      <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--accent-primary),#8b5cf6);
-        border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;">👤</div>
+      <div style="width:64px;height:64px;background:linear-gradient(135deg,#FF6A00,#D35400);
+        border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;color:white;flex-shrink:0;
+        box-shadow:0 4px 16px rgba(255,106,0,0.3);">U</div>
       <div>
-        <h3 style="margin:0 0 0.25rem 0;">${profile.full_name || 'Unnamed User'}</h3>
-        <div style="color:var(--text-secondary);font-size:0.88rem;">${profile.email}</div>
-        <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.25rem;">
+        <h3 style="margin:0 0 0.25rem 0;color:#F0F0F2;">${profile.full_name || 'Unnamed User'}</h3>
+        <div style="color:#9A9AA0;font-size:0.88rem;">${profile.email}</div>
+        <div style="font-size:0.8rem;color:#9A9AA0;margin-top:0.25rem;">
           User ID: <code style="font-size:0.75rem;">${userId}</code>
         </div>
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.15rem;">
-          Joined: ${new Date(profile.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}
+          Joined: ${new Date(profile.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;text-align:center;">
-        <div style="background:var(--bg-tertiary);border-radius:0.6rem;padding:0.75rem;">
-          <div style="font-size:1.5rem;font-weight:800;color:var(--accent-primary);">${userPotholes.length}</div>
-          <div style="font-size:0.75rem;color:var(--text-secondary);">Total</div>
+        <div style="background:#2A2A2E;border-radius:10px;padding:0.75rem;">
+          <div style="font-size:1.5rem;font-weight:800;color:#FF6A00;">${userPotholes.length}</div>
+          <div style="font-size:0.75rem;color:#9A9AA0;">Total</div>
         </div>
-        <div style="background:var(--bg-tertiary);border-radius:0.6rem;padding:0.75rem;">
+        <div style="background:#2A2A2E;border-radius:10px;padding:0.75rem;">
           <div style="font-size:1.5rem;font-weight:800;color:#ef4444;">${active}</div>
-          <div style="font-size:0.75rem;color:var(--text-secondary);">Active</div>
+          <div style="font-size:0.75rem;color:#9A9AA0;">Active</div>
         </div>
-        <div style="background:var(--bg-tertiary);border-radius:0.6rem;padding:0.75rem;">
+        <div style="background:#2A2A2E;border-radius:10px;padding:0.75rem;">
           <div style="font-size:1.5rem;font-weight:800;color:#f59e0b;">${highCount}</div>
-          <div style="font-size:0.75rem;color:var(--text-secondary);">High</div>
+          <div style="font-size:0.75rem;color:#9A9AA0;">High</div>
         </div>
       </div>
     `;
@@ -868,7 +874,7 @@ async function loadUserProfile(userId, container) {
     if (userPotholes.length === 0) {
       const empty = document.createElement('p');
       empty.textContent = 'This user has not reported any potholes.';
-      empty.style.color = 'var(--text-secondary)';
+      empty.style.color = '#9A9AA0';
       container.appendChild(empty);
       return;
     }

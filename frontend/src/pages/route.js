@@ -6,7 +6,7 @@ import { router } from '../router.js';
 
 const OSRM_URL = 'https://router.project-osrm.org';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = '/api';
 
 // Module-level state
 let routeMap = null;
@@ -28,7 +28,7 @@ export function renderRoutePage(container) {
 
   const app = document.createElement('div');
   app.style.cssText = 'display:flex;flex-direction:column;min-height:100vh;';
-  app.appendChild(createNavbar());
+  app.appendChild(createNavbar('route'));
 
   const content = document.createElement('div');
   content.style.cssText = `
@@ -41,7 +41,7 @@ export function renderRoutePage(container) {
   sidebar.style.cssText = `
     width: 380px; min-width: 340px; max-width: 400px;
     display: flex; flex-direction: column;
-    background: var(--bg-secondary);
+    background: var(--bg-surface);
     border-right: 1px solid var(--border);
     overflow-y: auto; flex-shrink: 0;
   `;
@@ -50,8 +50,8 @@ export function renderRoutePage(container) {
   sidebarInner.style.cssText = 'padding: 1.25rem; display:flex; flex-direction:column; gap:1rem;';
 
   const h1 = document.createElement('h2');
-  h1.textContent = '🛣️ Route Planner';
-  h1.style.cssText = 'margin:0; font-size:1.4rem;';
+  h1.textContent = 'Route Planner';
+  h1.style.cssText = 'margin:0; font-size:1.25rem; font-weight:700;';
 
   sidebarInner.appendChild(h1);
   sidebarInner.appendChild(createRouteForm());
@@ -62,13 +62,12 @@ export function renderRoutePage(container) {
 
   const startJourneyBtn = document.createElement('button');
   startJourneyBtn.id = 'startJourneyBtn';
-  startJourneyBtn.textContent = '🚗 Start Journey';
+  startJourneyBtn.textContent = 'Start Journey';
   startJourneyBtn.style.cssText = `
-    display:none; width:100%; padding:0.9rem; font-size:1rem; font-weight:700;
-    background: linear-gradient(135deg, #10b981, #059669);
-    border:none; border-radius:0.75rem; cursor:pointer; color:white;
-    box-shadow: 0 4px 15px rgba(16,185,129,0.4);
-    transition: all 0.2s;
+    display:none; width:100%; padding:0.75rem; font-size:0.9rem; font-weight:600;
+    background: var(--accent);
+    border:none; border-radius:var(--radius-m); cursor:pointer; color:white;
+    transition: all 0.2s ease;
   `;
   startJourneyBtn.onmouseenter = () => startJourneyBtn.style.transform = 'translateY(-2px)';
   startJourneyBtn.onmouseleave = () => startJourneyBtn.style.transform = 'translateY(0)';
@@ -86,13 +85,13 @@ export function renderRoutePage(container) {
   const legend = document.createElement('div');
   legend.style.cssText = `
     position:absolute; bottom:2rem; right:0.75rem; z-index:999;
-    background:rgba(30,41,59,0.92); border:1px solid var(--border);
-    border-radius:0.75rem; padding:0.75rem 1rem; font-size:0.82rem;
-    backdrop-filter:blur(8px);
+    background: var(--bg-surface); border:1px solid var(--border);
+    border-radius: var(--radius-m); padding:0.75rem 1rem; font-size:0.78rem;
+    box-shadow: var(--shadow-md);
   `;
   legend.innerHTML = `
-    <p style="margin:0 0 0.4rem 0; font-weight:600; color:var(--text-primary);">Route Legend</p>
-    <div style="display:flex;flex-direction:column;gap:0.3rem;">
+    <p style="margin:0 0 0.4rem 0; font-weight:600; color:var(--text-primary);font-size:0.78rem;">Legend</p>
+    <div style="display:flex;flex-direction:column;gap:0.3rem;color:var(--text-secondary);">
       <div><span style="display:inline-block;width:18px;height:4px;background:#10b981;border-radius:2px;vertical-align:middle;margin-right:0.4rem;"></span>Safest Route</div>
       <div><span style="display:inline-block;width:18px;height:4px;background:#f59e0b;border-radius:2px;vertical-align:middle;margin-right:0.4rem;"></span>Alternative</div>
       <div style="margin-top:0.3rem;"><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-right:0.4rem;"></span>High Severity</div>
@@ -122,7 +121,7 @@ function createRouteForm() {
 
   const startLabel = document.createElement('label');
   startLabel.textContent = 'Start Location';
-  startLabel.style.cssText = 'font-weight:600; font-size:0.9rem;';
+  startLabel.style.cssText = 'font-weight:600; font-size:0.85rem; color:var(--text-secondary);';
 
   const startInputGroup = document.createElement('div');
   startInputGroup.style.cssText = 'display:flex;gap:0.5rem;';
@@ -135,9 +134,9 @@ function createRouteForm() {
 
   const gpsBtn = document.createElement('button');
   gpsBtn.type = 'button';
-  gpsBtn.textContent = '📍';
+  gpsBtn.textContent = 'GPS';
   gpsBtn.title = 'Use my location';
-  gpsBtn.style.cssText = 'width:40px;padding:0;flex-shrink:0;font-size:1.1rem;';
+  gpsBtn.style.cssText = 'width:40px;padding:0;flex-shrink:0;font-size:0.9rem;border-radius:var(--radius-s);';
   gpsBtn.onclick = async () => {
     gpsBtn.textContent = '⏳';
     const loc = await getUserLocation();
@@ -149,7 +148,7 @@ function createRouteForm() {
     } else {
       showAlert('Could not access your location', 'error');
     }
-    gpsBtn.textContent = '📍';
+    gpsBtn.textContent = 'GPS';
   };
 
   startInputGroup.appendChild(startInput);
@@ -163,7 +162,7 @@ function createRouteForm() {
 
   const destLabel = document.createElement('label');
   destLabel.textContent = 'Destination';
-  destLabel.style.cssText = 'font-weight:600; font-size:0.9rem;';
+  destLabel.style.cssText = 'font-weight:600; font-size:0.85rem; color:var(--text-secondary);';
 
   const destInput = document.createElement('input');
   destInput.id = 'destLocation';
@@ -176,13 +175,13 @@ function createRouteForm() {
 
   const hint = document.createElement('p');
   hint.textContent = 'Tip: Enter coordinates as "lat, lng" or a place name';
-  hint.style.cssText = 'font-size:0.78rem; color:var(--text-secondary); margin:0;';
+  hint.style.cssText = 'font-size:0.75rem; color:var(--text-tertiary); margin:0;';
 
   const submitBtn = document.createElement('button');
   submitBtn.type = 'submit';
   submitBtn.id = 'findRoutesBtn';
-  submitBtn.textContent = '🔍 Find Routes';
-  submitBtn.style.cssText = 'padding:0.75rem; font-weight:700; width:100%;';
+  submitBtn.textContent = 'Find Routes';
+  submitBtn.style.cssText = 'padding:0.65rem; font-weight:600; width:100%;font-size:0.9rem;';
 
   form.appendChild(startWrap);
   form.appendChild(destWrap);
@@ -210,7 +209,7 @@ async function handleRouteSearch(e) {
 
   btn.textContent = '⏳ Searching...';
   btn.disabled = true;
-  cardsArea.innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;">Fetching routes…</p>';
+  cardsArea.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;">Searching routes…</p>';
   document.getElementById('startJourneyBtn').style.display = 'none';
 
   try {
@@ -270,7 +269,7 @@ async function handleRouteSearch(e) {
     showAlert('Route search failed: ' + err.message, 'error');
     cardsArea.innerHTML = '';
   } finally {
-    btn.textContent = '🔍 Find Routes';
+    btn.textContent = 'Find Routes';
     btn.disabled = false;
   }
 }
@@ -379,16 +378,16 @@ function renderRouteCards(container, startCoords, destCoords) {
     const card = document.createElement('div');
     card.id = `routeCard-${idx}`;
     card.style.cssText = `
-      padding: 1rem; border-radius: 0.75rem; cursor: pointer;
-      border: 2px solid ${isSelected ? routeColor : 'var(--border)'};
-      background: ${isSelected ? routeColor + '15' : 'var(--bg-tertiary)'};
-      transition: all 0.2s; position: relative;
+      padding: 1rem; border-radius: var(--radius-m); cursor: pointer;
+      border: 1px solid ${isSelected ? routeColor : 'var(--border)'};
+      background: ${isSelected ? routeColor + '12' : 'var(--bg-raised)'};
+      transition: all 0.2s ease; position: relative;
     `;
 
     const badge = isSafest ? `<span style="
       position:absolute; top:0.5rem; right:0.5rem;
-      background:#10b981; color:white; font-size:0.7rem; font-weight:700;
-      padding:0.2rem 0.5rem; border-radius:0.5rem; letter-spacing:0.5px;
+      background:var(--success); color:white; font-size:0.65rem; font-weight:700;
+      padding:0.15rem 0.45rem; border-radius:4px; letter-spacing:0.5px;
     ">✓ SAFEST</span>` : '';
 
     card.innerHTML = `
@@ -439,11 +438,11 @@ function selectRoute(idx, startCoords, destCoords) {
     const routeColor = isSafest ? routeColors[0] : routeColors[Math.min(i, 2)];
 
     if (i === idx) {
-      card.style.border = `2px solid ${routeColor}`;
-      card.style.background = routeColor + '15';
+      card.style.border = `1px solid ${routeColor}`;
+      card.style.background = routeColor + '12';
     } else {
-      card.style.border = '2px solid var(--border)';
-      card.style.background = 'var(--bg-tertiary)';
+      card.style.border = '1px solid var(--border)';
+      card.style.background = 'var(--bg-raised)';
     }
   });
 

@@ -2,13 +2,13 @@ import { createNavbar } from "../components/navbar.js";
 import { routeStore } from "../services/routeStore.js";
 import { router } from "../router.js";
 
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = '/api';
 const FLAG_WINDOW_SECONDS = 60;
 
 // ── Vehicle profiles ──────────────────────────────────────────────────────────
 const VEHICLE_PROFILES = {
     two_wheeler: {
-        label: "🏍️ Two Wheeler",
+        label: "Two Wheeler",
         description: "Motorcycle, scooter, bicycle",
         warningSeconds: 15,
         passageRadius: 40,
@@ -19,7 +19,7 @@ const VEHICLE_PROFILES = {
         priority: "HIGH",
     },
     three_wheeler: {
-        label: "🛺 Three Wheeler",
+        label: "Three Wheeler",
         description: "Auto rickshaw, tuk-tuk",
         warningSeconds: 13,
         passageRadius: 35,
@@ -30,7 +30,7 @@ const VEHICLE_PROFILES = {
         priority: "ELEVATED",
     },
     four_wheeler: {
-        label: "🚗 Four Wheeler",
+        label: "Four Wheeler",
         description: "Car, SUV, van",
         warningSeconds: 10,
         passageRadius: 30,
@@ -41,7 +41,7 @@ const VEHICLE_PROFILES = {
         priority: "STANDARD",
     },
     truck: {
-        label: "🚛 Truck",
+        label: "Truck",
         description: "Lorry, heavy vehicle",
         warningSeconds: 10,
         passageRadius: 30,
@@ -77,26 +77,26 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
     const overlay = document.createElement("div");
     overlay.style.cssText = `
     position:fixed;inset:0;z-index:9999;
-    background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);
+    background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
     display:flex;align-items:center;justify-content:center;padding:1rem;
   `;
 
     const modal = document.createElement("div");
     modal.style.cssText = `
-    background:var(--bg-secondary);border:1px solid var(--border);
-    border-radius:1.25rem;padding:2rem;max-width:480px;width:100%;
-    box-shadow:0 24px 64px rgba(0,0,0,0.6);
+    background:var(--bg-surface);border:1px solid var(--border);
+    border-radius:var(--radius-xl);padding:2rem;max-width:480px;width:100%;
+    box-shadow:var(--shadow-xl);
   `;
 
     const title = document.createElement("h2");
-    title.textContent = "🚦 Select Your Vehicle";
-    title.style.cssText = "margin:0 0 0.4rem 0;font-size:1.3rem;";
+    title.textContent = "Select Your Vehicle";
+    title.style.cssText = "margin:0 0 0.4rem 0;font-size:1.3rem;font-weight:700;color:#F0F0F2;";
 
     const subtitle = document.createElement("p");
     subtitle.textContent =
         "Alert sensitivity will be adjusted based on your vehicle type.";
     subtitle.style.cssText =
-        "margin:0 0 1.5rem 0;color:var(--text-secondary);font-size:0.88rem;";
+        "margin:0 0 1.5rem 0;color:var(--text-secondary);font-size:0.85rem;";
 
     const grid = document.createElement("div");
     grid.style.cssText =
@@ -108,9 +108,9 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
     Object.entries(VEHICLE_PROFILES).forEach(([key, profile]) => {
         const card = document.createElement("div");
         card.style.cssText = `
-      padding:1rem;border-radius:0.875rem;cursor:pointer;
-      border:2px solid var(--border);background:var(--bg-tertiary);
-      transition:all 0.15s;text-align:center;
+      padding:1rem;border-radius:var(--radius-m);cursor:pointer;
+      border:1px solid var(--border);background:var(--bg-raised);
+      transition:all 0.2s ease;text-align:center;
     `;
 
         card.innerHTML = `
@@ -135,7 +135,7 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
             // Deselect previous
             if (selectedKey && cards[selectedKey]) {
                 cards[selectedKey].style.borderColor = "var(--border)";
-                cards[selectedKey].style.background = "var(--bg-tertiary)";
+                cards[selectedKey].style.background = "var(--bg-raised)";
             }
             selectedKey = key;
             card.style.borderColor = profile.color;
@@ -149,13 +149,13 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
     });
 
     const startBtn = document.createElement("button");
-    startBtn.textContent = "🚗 Start Journey";
+    startBtn.textContent = "Start Journey";
     startBtn.disabled = true;
     startBtn.style.cssText = `
-    width:100%;padding:0.875rem;font-weight:700;font-size:1rem;
-    background:linear-gradient(135deg,#10b981,#059669);
-    border:none;border-radius:0.75rem;color:white;cursor:pointer;
-    opacity:0.5;transition:opacity 0.2s;
+    width:100%;padding:0.75rem;font-weight:600;font-size:0.9rem;
+    background:var(--accent);
+    border:none;border-radius:var(--radius-m);color:white;cursor:pointer;
+    opacity:0.5;transition:all 0.2s ease;
   `;
 
     startBtn.onclick = () => {
@@ -178,18 +178,17 @@ function renderJourneyUI(container, routeCoords, potholes, destination) {
     const app = document.createElement("div");
     app.style.cssText =
         "display:flex;flex-direction:column;min-height:100vh;position:relative;";
-    app.appendChild(createNavbar());
+    app.appendChild(createNavbar('journey'));
 
-    // HUD bar
     const hud = document.createElement("div");
     hud.style.cssText = `
     display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
     padding:0.75rem 1.25rem;
-    background:var(--bg-secondary);border-bottom:1px solid var(--border);
+    background:var(--bg-surface);border-bottom:1px solid var(--border);
     z-index:200;position:relative;
   `;
 
-    const speedBox = createHudBox("Speed", "— km/h", "speedDisplay", "#3b82f6");
+    const speedBox = createHudBox("Speed", "— km/h", "speedDisplay", "#FF6A00");
     const distBox = createHudBox(
         "Distance to Dest",
         "—",
@@ -198,7 +197,7 @@ function renderJourneyUI(container, routeCoords, potholes, destination) {
     );
     const statusBox = createHudBox(
         "Status",
-        "📡 Locating…",
+        "Locating...",
         "statusDisplay",
         "#10b981",
     );
@@ -215,11 +214,11 @@ function renderJourneyUI(container, routeCoords, potholes, destination) {
     vehicleBadge.textContent = selectedVehicle.label;
 
     const exitBtn = document.createElement("button");
-    exitBtn.textContent = "✕ Exit Journey";
+    exitBtn.textContent = "Exit Journey";
     exitBtn.style.cssText = `
-    margin-left:auto;padding:0.5rem 1rem;background:var(--error);
-    border:none;border-radius:0.5rem;color:white;font-weight:700;
-    cursor:pointer;font-size:0.9rem;
+    margin-left:auto;padding:0.4rem 0.85rem;background:var(--error);
+    border:none;border-radius:var(--radius-s);color:white;font-weight:600;
+    cursor:pointer;font-size:0.82rem;min-height:auto;
   `;
     exitBtn.onclick = stopJourney;
 
@@ -253,11 +252,11 @@ function renderJourneyUI(container, routeCoords, potholes, destination) {
 function createHudBox(label, value, id, color) {
     const box = document.createElement("div");
     box.style.cssText = `
-    padding:0.4rem 0.9rem;background:${color}18;
-    border:1px solid ${color}44;border-radius:0.5rem;min-width:130px;
+    padding:0.4rem 0.9rem;background:${color}10;
+    border:1px solid ${color}25;border-radius:var(--radius-s);min-width:130px;
   `;
     box.innerHTML = `
-    <div style="font-size:0.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">${label}</div>
+    <div style="font-size:0.7rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.5px;">${label}</div>
     <div id="${id}" style="font-size:1.1rem;font-weight:700;color:${color};">${value}</div>
   `;
     return box;
@@ -270,8 +269,9 @@ function createWarningOverlay() {
     overlay.style.cssText = `
     display:none;position:fixed;top:120px;left:50%;transform:translateX(-50%);
     z-index:9999;color:white;
-    border-radius:1rem;padding:1.2rem 2rem;text-align:center;
+    border-radius:16px;padding:1.2rem 2rem;text-align:center;
     min-width:300px;animation:warnPulse 0.5s ease-out;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   `;
 
     const style = document.createElement("style");
@@ -284,7 +284,7 @@ function createWarningOverlay() {
     document.head.appendChild(style);
 
     overlay.innerHTML = `
-    <div style="font-size:2rem;margin-bottom:0.3rem;">⚠️</div>
+    <div style="font-size:1.2rem;margin-bottom:0.3rem;font-weight:700;color:var(--warning);">WARNING</div>
     <div id="warningTitle" style="font-weight:800;font-size:1.15rem;margin-bottom:0.25rem;">POTHOLE AHEAD!</div>
     <div id="warningDetail" style="font-size:0.9rem;opacity:0.9;"></div>
     <div id="warningVehicle" style="font-size:0.8rem;opacity:0.75;margin-top:0.3rem;"></div>
@@ -298,19 +298,19 @@ function createFlagPanel() {
     const panel = document.createElement("div");
     panel.style.cssText = `
     display:none;position:fixed;bottom:5rem;right:1.5rem;
-    z-index:9998;background:var(--bg-secondary);
-    border:2px solid var(--warning);border-radius:1rem;
+    z-index:9998;background:var(--bg-surface);
+    border:1px solid var(--border-accent);border-radius:var(--radius-l);
     padding:1rem 1.25rem;max-width:270px;
-    box-shadow:0 8px 24px rgba(245,158,11,0.3);
+    box-shadow:var(--shadow-lg);
   `;
     panel.innerHTML = `
-    <p style="margin:0 0 0.6rem 0;font-weight:600;font-size:0.95rem;">🚩 Not a pothole?</p>
+    <p style="margin:0 0 0.6rem 0;font-weight:600;font-size:0.95rem;">Not a pothole?</p>
     <p style="margin:0 0 0.75rem 0;font-size:0.82rem;color:var(--text-secondary);" id="flagDetail"></p>
     <div style="display:flex;gap:0.5rem;">
-      <button id="confirmFlagBtn" style="flex:1;padding:0.5rem;font-size:0.85rem;background:#f59e0b;border:none;border-radius:0.5rem;color:white;font-weight:700;cursor:pointer;">
-        🚩 Flag as Fake
+      <button id="confirmFlagBtn" style="flex:1;padding:0.5rem;font-size:0.85rem;background:var(--accent);border:none;border-radius:var(--radius-s);color:white;font-weight:600;cursor:pointer;min-height:auto;">
+        Flag as Fake
       </button>
-      <button id="dismissFlagBtn" style="padding:0.5rem 0.75rem;font-size:0.85rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.5rem;color:var(--text-primary);cursor:pointer;">
+      <button id="dismissFlagBtn" style="padding:0.5rem 0.75rem;font-size:0.85rem;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text-secondary);cursor:pointer;min-height:auto;">
         ✕
       </button>
     </div>
@@ -342,7 +342,7 @@ function initJourneyMap(routeCoords, potholes, destination) {
     }).addTo(journeyMap);
 
     L.polyline(routeCoords, {
-        color: "#3b82f6",
+        color: "#FF6A00",
         weight: 6,
         opacity: 0.85,
     }).addTo(journeyMap);
@@ -389,18 +389,18 @@ function initJourneyMap(routeCoords, potholes, destination) {
 
 function startGPS(routeCoords, potholes, destination) {
     if (!("geolocation" in navigator)) {
-        updateStatus("❌ GPS not available");
+        updateStatus("GPS not available");
         return;
     }
 
     const statusEl = document.getElementById("statusDisplay");
-    if (statusEl) statusEl.textContent = "📡 Acquiring GPS…";
+    if (statusEl) statusEl.textContent = "Acquiring GPS...";
 
     watchId = navigator.geolocation.watchPosition(
         (pos) => onPositionUpdate(pos, routeCoords, potholes, destination),
         (err) => {
             console.error("GPS error:", err);
-            updateStatus("❌ GPS error");
+            updateStatus("GPS error");
         },
         { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 },
     );
@@ -424,7 +424,7 @@ function onPositionUpdate(pos, routeCoords, potholes, destination) {
     if (speedEl)
         speedEl.textContent =
             speedKmh != null ? `${speedKmh.toFixed(0)} km/h` : "— km/h";
-    updateStatus("🟢 Live Tracking");
+    updateStatus("Live Tracking");
 
     if (destination) {
         const distKm =
@@ -527,7 +527,7 @@ function playBeep(freq = 880, duration = 0.6) {
         );
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + duration);
-    } catch (_) {}
+    } catch (_) { }
 }
 
 // ── Flag Panel ────────────────────────────────────────────────────────────────
@@ -571,12 +571,12 @@ async function submitFlag(pothole) {
             );
         } else if (data.pothole_removed) {
             showTemporaryToast(
-                "✅ Pothole marked as removed — thank you!",
+                "Pothole marked as removed. Thank you!",
                 "#10b981",
             );
         } else {
             showTemporaryToast(
-                `🚩 Flagged! (${data.total_flags} flags total)`,
+                `Flagged! (${data.total_flags} flags total)`,
                 "#f59e0b",
             );
         }
@@ -595,7 +595,7 @@ async function recordPassage(potholeId) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: user.id }),
         });
-    } catch (_) {}
+    } catch (_) { }
 }
 
 // ── Stop Journey ──────────────────────────────────────────────────────────────
@@ -647,9 +647,9 @@ function showTemporaryToast(message, color) {
     const toast = document.createElement("div");
     toast.style.cssText = `
     position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);
-    background:${color};color:white;padding:0.75rem 1.5rem;
-    border-radius:0.75rem;font-weight:600;z-index:99999;
-    box-shadow:0 4px 20px rgba(0,0,0,0.3);font-size:0.9rem;
+    background:${color};color:white;padding:0.6rem 1.25rem;
+    border-radius:var(--radius-s);font-weight:600;z-index:99999;
+    box-shadow:var(--shadow-md);font-size:0.85rem;
   `;
     toast.textContent = message;
     document.body.appendChild(toast);

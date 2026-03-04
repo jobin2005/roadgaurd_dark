@@ -7,7 +7,12 @@ export function showAlert(message, type = 'error', duration = 5000) {
     right: 1rem;
     max-width: 400px;
     z-index: 1000;
-    animation: slideIn 0.3s ease-out;
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    font-weight: 500;
   `;
   alert.textContent = message;
 
