@@ -262,14 +262,37 @@ async function handleUpload(e) {
     const btn = document.getElementById('submitReportBtn');
     btn.disabled = true; btn.textContent = 'Submitting…';
 
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.85));
+    // Resize the image client-side to max 800px before uploading
+    const MAX_DIM = 800;
+    let w = canvas.width, h = canvas.height;
+    if (w > MAX_DIM || h > MAX_DIM) {
+      const scale = MAX_DIM / Math.max(w, h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
+    const resizedCanvas = document.createElement('canvas');
+    resizedCanvas.width = w;
+    resizedCanvas.height = h;
+    resizedCanvas.getContext('2d').drawImage(canvas, 0, 0, w, h);
+
+    const blob = await new Promise(r => resizedCanvas.toBlob(r, 'image/jpeg', 0.7));
     const file = new File([blob], `pothole_${Date.now()}.jpg`, { type: 'image/jpeg' });
     const fd = new FormData();
     fd.append('image', file); fd.append('user_id', user.id);
     fd.append('latitude', capturedLocation.latitude); fd.append('longitude', capturedLocation.longitude);
     fd.append('description', description);
 
-    const res = await fetch(`${BACKEND_URL}/predict`, { method: 'POST', body: fd });
+    // 60-second timeout to avoid hanging indefinitely
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    const res = await fetch(`${BACKEND_URL}/predict`, {
+      method: 'POST',
+      body: fd,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Prediction failed');
 
@@ -286,8 +309,10 @@ async function handleUpload(e) {
   } catch (err) {
     console.error('Upload error details:', err);
     let msg = err.message || 'Upload failed';
-    if (msg.includes('Failed to fetch')) {
-      msg = 'Server unreachable (CORS or 502 Bad Gateway). Please check Render logs.';
+    if (err.name === 'AbortError') {
+      msg = 'Request timed out. The server may be waking up — please try again in a moment.';
+    } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      msg = 'Server unreachable. It may be starting up — please wait 30s and retry.';
     }
     showAlert(msg, 'error');
     const btn = document.getElementById('submitReportBtn');

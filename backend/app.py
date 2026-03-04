@@ -1,6 +1,6 @@
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress TF logging
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
@@ -173,16 +173,13 @@ def home():
 
 # ─────────────────────────────── EXISTING ENDPOINT ───────────────────────────
 
-@app.route("/predict", methods=["POST", "OPTIONS"])
+@app.route("/predict", methods=["POST"])
 def predict():
-    if request.method == "OPTIONS":
-        return _build_cors_preflight_response()
-    
     print("[*] Received prediction request")
     try:
         if "image" not in request.files:
             print("[!] No image in request")
-            return _corsify_actual_response(jsonify({"error": "No image provided"}), 400)
+            return jsonify({"error": "No image provided"}), 400
 
         file = request.files["image"]
         user_id = request.form.get("user_id")
@@ -197,6 +194,12 @@ def predict():
         image_bytes = file.read()
         img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
+        # Resize for faster processing — model only needs 128×128,
+        # and OpenCV analysis doesn't need more than 800px
+        MAX_DIM = 800
+        if max(img.size) > MAX_DIM:
+            img.thumbnail((MAX_DIM, MAX_DIM), Image.LANCZOS)
+
         processed = preprocess_image(img)
 
         prediction = model.predict(processed)[0][0]
@@ -207,27 +210,32 @@ def predict():
         # If NOT pothole → just return result
         if result == "No Pothole":
             import gc
-            gc.collect() # Try to clear memory
-            return _corsify_actual_response(jsonify({
+            gc.collect()
+            return jsonify({
                 "result": result,
                 "confidence": confidence
-            }))
+            })
 
         # ====== ADVANCED SEVERITY ANALYSIS ======
         print("[*] Starting severity analysis...")
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img_cv = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        # Convert the already-resized PIL image to OpenCV format
+        img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
         severity, severity_metrics = extract_and_analyze_pothole(img_cv)
         print(f"[*] Severity: {severity}")
 
         # ====== UPLOAD IMAGE TO SUPABASE STORAGE ======
+        # Re-encode the resized image to save bandwidth on Supabase upload too
+        upload_buffer = io.BytesIO()
+        img.save(upload_buffer, format="JPEG", quality=80)
+        upload_bytes = upload_buffer.getvalue()
+
         filename = f"{user_id}/{uuid.uuid4()}.jpg"
         print(f"[*] Uploading to Supabase: {filename}")
 
         supabase.storage.from_("Potholes").upload(
             filename,
-            image_bytes,
+            upload_bytes,
             {"content-type": "image/jpeg"}
         )
 
@@ -254,30 +262,19 @@ def predict():
         import gc
         gc.collect()
 
-        return _corsify_actual_response(jsonify({
+        return jsonify({
             "result": result,
             "confidence": confidence,
             "severity": severity,
             "severity_metrics": severity_metrics,
             "stored": True
-        }))
+        })
 
     except Exception as e:
         print(f"[ERROR] {str(e)}")
         import gc
         gc.collect()
-        return _corsify_actual_response(jsonify({"error": str(e)}), 500)
-
-def _build_cors_preflight_response():
-    response = make_response()
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "*")
-    response.headers.add("Access-Control-Allow-Methods", "*")
-    return response
-
-def _corsify_actual_response(response, status=200):
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, status
+        return jsonify({"error": str(e)}), 500
 
 
 # ─────────────────────────────── NEW ENDPOINTS ───────────────────────────────
