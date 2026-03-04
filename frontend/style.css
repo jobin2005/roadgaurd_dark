@@ -274,48 +274,167 @@ textarea::placeholder {
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 
+/* Desktop nav links visible, hamburger hidden */
+.nav-hamburger {
+  display: none !important;
+}
+
+.nav-links {
+  display: flex !important;
+}
+
+/* ── Tablet: 641–1024px ─────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  h1 {
+    font-size: 1.65rem;
+  }
+}
+
+/* ── Mobile: ≤768px ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   h1 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 
   h2 {
-    font-size: 1.125rem;
+    font-size: 1.1rem;
   }
 
+  /* ── Navigation ─────────────────────────────────────────────────────── */
+  /* Show hamburger, hide inline desktop links */
   .nav-hamburger {
     display: flex !important;
   }
 
   .nav-links {
     display: none !important;
-    position: fixed;
-    top: 52px;
-    left: 0;
-    right: 0;
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0.75rem;
-    flex-direction: column;
-    gap: 0.25rem;
-    z-index: 99;
-    box-shadow: var(--shadow-lg);
   }
 
-  .nav-links.nav-open {
-    display: flex !important;
+  /* Mobile menu drawer — rendered by navbar.js into body, z-index 2000 */
+  .nav-mobile-menu {
+    position: fixed !important;
+    top: 52px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 2000 !important;
   }
 
-  .nav-links a,
-  .nav-links button {
+  /* Backdrop — sits just below the menu */
+  .nav-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1999 !important;
+  }
+
+  /* ── Journey HUD ─────────────────────────────────────────────────────── */
+  #journeyHud {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* ── General content padding ─────────────────────────────────────────── */
+  .page,
+  [style*="padding: 2rem"] {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* ── Buttons & inputs full-width in forms ────────────────────────────── */
+  form button[type="submit"],
+  form input[type="submit"] {
     width: 100%;
-    text-align: left;
-    padding: 0.6rem 0.75rem;
+  }
+
+  /* ── Images ──────────────────────────────────────────────────────────── */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ── Leaflet map z-index guard — stays below nav ─────────────────────── */
+  .leaflet-pane {
+    z-index: 4 !important;
+  }
+
+  .leaflet-tile-pane {
+    z-index: 2 !important;
+  }
+
+  .leaflet-overlay-pane {
+    z-index: 4 !important;
+  }
+
+  .leaflet-shadow-pane {
+    z-index: 5 !important;
+  }
+
+  .leaflet-marker-pane {
+    z-index: 6 !important;
+  }
+
+  .leaflet-tooltip-pane {
+    z-index: 7 !important;
+  }
+
+  .leaflet-popup-pane {
+    z-index: 8 !important;
+  }
+
+  .leaflet-control {
+    z-index: 8 !important;
+  }
+
+  .leaflet-top,
+  .leaflet-bottom {
+    z-index: 8 !important;
   }
 }
 
+/* ── Large Mobile: ≤640px ───────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.3rem;
+  }
+
+  button,
+  input[type="submit"] {
+    min-height: 44px;
+    /* touch target */
+    font-size: 0.9rem;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 1rem;
+    /* prevents iOS auto-zoom */
+    padding: 0.65rem 0.85rem;
+  }
+}
+
+/* ── Small Mobile: ≤480px ───────────────────────────────────────────────── */
 @media (max-width: 480px) {
   h1 {
-    font-size: 1.35rem;
+    font-size: 1.2rem;
+  }
+
+  h2 {
+    font-size: 1rem;
+  }
+
+  /* Prevent horizontal overflow */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Warning overlay full-width on small screens */
+  #potholeWarning {
+    left: 1rem !important;
+    right: 1rem !important;
+    transform: none !important;
+    min-width: unset !important;
   }
 }

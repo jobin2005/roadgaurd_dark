@@ -6,12 +6,32 @@ export function renderMapPage(container) {
     app.style.cssText = "display:flex;flex-direction:column;min-height:100vh;background:var(--bg-base);";
     app.appendChild(createNavbar('map'));
 
+    // Responsive styles
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+      .map-header-row {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem;
+      }
+      .map-wrapper {
+        flex: 1; position: relative; border-radius: var(--radius-l);
+        overflow: hidden; border: 1px solid var(--border);
+        min-height: 400px;
+      }
+      #map { width: 100%; height: 100%; min-height: 400px; }
+      @media (max-width: 640px) {
+        .map-wrapper { min-height: 55vw; border-radius: var(--radius-m); }
+        #map { min-height: 55vw; }
+      }
+    `;
+    document.head.appendChild(styleEl);
+
     const content = document.createElement("div");
     content.style.cssText = "flex:1;display:flex;flex-direction:column;padding:1.25rem;gap:1rem;";
 
     // Header row
     const headerRow = document.createElement("div");
-    headerRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;";
+    headerRow.className = "map-header-row";
     headerRow.innerHTML = `
       <div>
         <h1 style="margin-bottom:0.2rem;font-size:1.5rem;">Map View</h1>
@@ -20,14 +40,11 @@ export function renderMapPage(container) {
     `;
 
     const mapWrapper = document.createElement("div");
-    mapWrapper.style.cssText = `
-        flex:1;position:relative;border-radius:var(--radius-l);overflow:hidden;
-        border:1px solid var(--border);min-height:600px;
-    `;
+    mapWrapper.className = "map-wrapper";
 
     const mapContainer = document.createElement("div");
     mapContainer.id = "map";
-    mapContainer.style.cssText = "width:100%;height:100%;min-height:600px;";
+    mapContainer.style.cssText = "width:100%;height:100%;";
 
     const findMeBtn = document.createElement("button");
     findMeBtn.textContent = "My location";

@@ -7,6 +7,21 @@ export function renderDashboard(container) {
   app.style.cssText = 'display:flex;flex-direction:column;min-height:100vh;background:var(--bg-base);';
   app.appendChild(createNavbar('dashboard'));
 
+  // Responsive styles for dashboard
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .dash-grid  { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    @media (max-width: 640px) {
+      .dash-stats { grid-template-columns: 1fr; }
+      .dash-grid  { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 641px) and (max-width: 900px) {
+      .dash-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  `;
+  document.head.appendChild(styleEl);
+
   const content = document.createElement('div');
   content.style.cssText = `
     flex: 1; padding: 2rem 1.5rem;
@@ -25,10 +40,7 @@ export function renderDashboard(container) {
 
   // Quick stats
   const statsRow = document.createElement('div');
-  statsRow.style.cssText = `
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
-    margin-bottom: 2rem;
-  `;
+  statsRow.className = 'dash-stats';
   statsRow.id = 'dashboardStats';
   statsRow.innerHTML = `
     ${createStatCard('Reports Filed', '—', 'var(--accent)')}
@@ -38,9 +50,7 @@ export function renderDashboard(container) {
 
   // Feature grid
   const grid = document.createElement('div');
-  grid.style.cssText = `
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;
-  `;
+  grid.className = 'dash-grid';
 
   const features = [
     {

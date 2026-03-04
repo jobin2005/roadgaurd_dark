@@ -4,14 +4,14 @@ import { showAlert } from '../components/alert.js';
 
 export function renderSignupPage(container) {
   container.innerHTML = `
-    <div style="
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      background: var(--bg-base);
-    ">
-      <!-- Left: Brand Panel -->
-      <div style="
+    <style>
+      .signup-layout {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: var(--bg-base);
+      }
+      .signup-brand {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -20,7 +20,37 @@ export function renderSignupPage(container) {
         overflow: hidden;
         background: var(--bg-subtle);
         border-right: 1px solid var(--border);
-      ">
+      }
+      .signup-form-panel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 2rem;
+      }
+      .signup-mobile-logo {
+        display: none;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 2rem;
+      }
+      @media (max-width: 768px) {
+        .signup-layout { grid-template-columns: 1fr; }
+        .signup-brand { display: none; }
+        .signup-form-panel {
+          padding: 2.5rem 1.5rem;
+          align-items: flex-start;
+          min-height: 100vh;
+        }
+        .signup-mobile-logo { display: flex !important; }
+      }
+      @media (max-width: 480px) {
+        .signup-form-panel { padding: 2rem 1rem; }
+      }
+    </style>
+
+    <div class="signup-layout">
+      <!-- Left: Brand Panel -->
+      <div class="signup-brand">
         <div style="
           position: absolute; inset: 0; opacity: 0.4;
           background:
@@ -31,10 +61,7 @@ export function renderSignupPage(container) {
         "></div>
 
         <div style="position: relative; z-index: 1; max-width: 420px;">
-          <div style="
-            display: flex; align-items: center; gap: 0.75rem;
-            margin-bottom: 3rem;
-          ">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 3rem;">
             <div style="
               width: 36px; height: 36px; border-radius: 8px;
               background: var(--accent); display: flex;
@@ -47,25 +74,16 @@ export function renderSignupPage(container) {
           <h1 style="
             font-size: 2.5rem; font-weight: 800;
             line-height: 1.15; letter-spacing: -0.03em;
-            margin-bottom: 1.25rem;
-            color: var(--text-primary);
+            margin-bottom: 1.25rem; color: var(--text-primary);
           ">
             Join the movement<br>for better roads.
           </h1>
 
-          <p style="
-            font-size: 1.05rem; line-height: 1.7;
-            color: var(--text-secondary);
-            max-width: 380px;
-          ">
+          <p style="font-size: 1.05rem; line-height: 1.7; color: var(--text-secondary); max-width: 380px;">
             Create an account to start reporting potholes, contribute to road safety data, and get smarter navigation.
           </p>
 
-          <div style="
-            display: flex; flex-direction: column; gap: 1rem;
-            margin-top: 3rem; padding-top: 2rem;
-            border-top: 1px solid var(--border);
-          ">
+          <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border);">
             <div style="display: flex; align-items: center; gap: 0.75rem;">
               <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0;"></div>
               <span style="font-size: 0.875rem; color: var(--text-secondary);">AI-powered pothole detection from photos</span>
@@ -83,18 +101,20 @@ export function renderSignupPage(container) {
       </div>
 
       <!-- Right: Signup Form -->
-      <div style="
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 3rem;
-      ">
+      <div class="signup-form-panel">
         <div style="width: 100%; max-width: 360px;">
+          <div class="signup-mobile-logo">
+            <div style="
+              width: 32px; height: 32px; border-radius: 7px;
+              background: var(--accent); display: flex;
+              align-items: center; justify-content: center;
+              font-weight: 800; font-size: 0.8rem; color: white;
+            ">R</div>
+            <span style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">RoadGuard</span>
+          </div>
+
           <div style="margin-bottom: 2.5rem;">
-            <h2 style="
-              font-size: 1.5rem; font-weight: 700;
-              letter-spacing: -0.02em; margin-bottom: 0.5rem;
-            ">Create your account</h2>
+            <h2 style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;">Create your account</h2>
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
               Get started in under a minute
             </p>
@@ -138,15 +158,9 @@ export function renderSignupPage(container) {
             ">Create Account</button>
           </form>
 
-          <p style="
-            text-align: center; margin-top: 2rem;
-            color: var(--text-tertiary); font-size: 0.85rem;
-          ">
+          <p style="text-align: center; margin-top: 2rem; color: var(--text-tertiary); font-size: 0.85rem;">
             Already have an account?
-            <a href="#" id="loginLink" style="
-              color: var(--accent); font-weight: 600;
-              margin-left: 0.25rem;
-            ">Sign in</a>
+            <a href="#" id="loginLink" style="color: var(--accent); font-weight: 600; margin-left: 0.25rem;">Sign in</a>
           </p>
         </div>
       </div>

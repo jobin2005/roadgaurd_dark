@@ -6,6 +6,7 @@ import { router } from '../router.js';
 import { BACKEND_URL } from '../services/apiConfig.js';
 
 const OSRM_URL = 'https://router.project-osrm.org';
+const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
 
 // Module-level state
 let routeMap = null;
@@ -29,21 +30,71 @@ export function renderRoutePage(container) {
   app.style.cssText = 'display:flex;flex-direction:column;min-height:100vh;';
   app.appendChild(createNavbar('route'));
 
-  const content = document.createElement('div');
-  content.style.cssText = `
-    flex:1; display:flex; gap:0; 
-    max-width:100%; width:100%; height:calc(100vh - 64px); overflow:hidden;
+  // Inject responsive styles for route page
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    .route-content {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      gap: 0;
+      width: 100%;
+      height: calc(100vh - 52px);
+      overflow: hidden;
+    }
+    .route-sidebar {
+      width: 380px;
+      min-width: 340px;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .route-map-container {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    @media (max-width: 768px) {
+      .route-content {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+      }
+      .route-sidebar {
+        width: 100%;
+        min-width: unset;
+        max-width: unset;
+        max-height: 60vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .route-map-container {
+        min-height: 55vw;
+        height: 50vh;
+      }
+      #routeMap {
+        height: 100% !important;
+        min-height: 280px !important;
+      }
+    }
+    @media (max-width: 480px) {
+      .route-sidebar {
+        max-height: 65vh;
+      }
+    }
   `;
+  document.head.appendChild(styleEl);
+
+  const content = document.createElement('div');
+  content.className = 'route-content';
 
   // ── Sidebar ───────────────────────────────────────────────────────────────
   const sidebar = document.createElement('div');
-  sidebar.style.cssText = `
-    width: 380px; min-width: 340px; max-width: 400px;
-    display: flex; flex-direction: column;
-    background: var(--bg-surface);
-    border-right: 1px solid var(--border);
-    overflow-y: auto; flex-shrink: 0;
-  `;
+  sidebar.className = 'route-sidebar';
 
   const sidebarInner = document.createElement('div');
   sidebarInner.style.cssText = 'padding: 1.25rem; display:flex; flex-direction:column; gap:1rem;';
@@ -78,7 +129,7 @@ export function renderRoutePage(container) {
   // ── Map ───────────────────────────────────────────────────────────────────
   const mapContainer = document.createElement('div');
   mapContainer.id = 'routeMap';
-  mapContainer.style.cssText = 'flex:1; overflow:hidden; position:relative;';
+  mapContainer.className = 'route-map-container';
 
   // Legend
   const legend = document.createElement('div');
