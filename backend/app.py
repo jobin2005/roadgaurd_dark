@@ -24,7 +24,9 @@ app = Flask(__name__)
 CORS(app)
 
 # Load model once at startup
-model = load_model("models/pothole_detector.h5")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "pothole_detector.h5")
+model = load_model(MODEL_PATH)
 # Compile to silence "metrics not built" warning
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
