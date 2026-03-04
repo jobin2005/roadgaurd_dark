@@ -1,6 +1,6 @@
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress TF logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
@@ -26,9 +26,9 @@ CORS(app)
 # Load model once at startup
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "pothole_detector.h5")
+print(f"[*] Loading model from: {MODEL_PATH}")
 model = load_model(MODEL_PATH)
-# Compile to silence "metrics not built" warning
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+print("[*] Model loaded successfully")
 
 IMG_SIZE = 128
 
@@ -173,11 +173,16 @@ def home():
 
 # ─────────────────────────────── EXISTING ENDPOINT ───────────────────────────
 
-@app.route("/predict", methods=["POST"])
+@app.route("/predict", methods=["POST", "OPTIONS"])
 def predict():
+    if request.method == "OPTIONS":
+        return _build_cors_preflight_response()
+    
+    print("[*] Received prediction request")
     try:
         if "image" not in request.files:
-            return jsonify({"error": "No image provided"}), 400
+            print("[!] No image in request")
+            return _corsify_actual_response(jsonify({"error": "No image provided"}), 400)
 
         file = request.files["image"]
         user_id = request.form.get("user_id")
@@ -195,26 +200,26 @@ def predict():
         processed = preprocess_image(img)
 
         prediction = model.predict(processed)[0][0]
-        confidence = float(prediction)
-
-        result = "Pothole" if confidence > 0.5 else "No Pothole"
+        print(f"[*] Prediction result: {result} ({confidence:.2%})")
 
         # If NOT pothole → just return result
         if result == "No Pothole":
-            return jsonify({
+            return _corsify_actual_response(jsonify({
                 "result": result,
                 "confidence": confidence
-            })
+            }))
 
         # ====== ADVANCED SEVERITY ANALYSIS ======
-        # Decode image for OpenCV
+        print("[*] Starting severity analysis...")
         nparr = np.frombuffer(image_bytes, np.uint8)
         img_cv = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         severity, severity_metrics = extract_and_analyze_pothole(img_cv)
+        print(f"[*] Severity: {severity}")
 
         # ====== UPLOAD IMAGE TO SUPABASE STORAGE ======
         filename = f"{user_id}/{uuid.uuid4()}.jpg"
+        print(f"[*] Uploading to Supabase: {filename}")
 
         supabase.storage.from_("Potholes").upload(
             filename,
@@ -225,6 +230,7 @@ def predict():
         public_url = supabase.storage.from_("Potholes").get_public_url(filename)
 
         # ====== INSERT INTO DATABASE ======
+        print("[*] Inserting into database...")
         supabase.table("potholes").insert({
             "user_id": user_id,
             "latitude": float(latitude),
@@ -239,17 +245,30 @@ def predict():
 
         # ====== Increment contributions ======
         supabase.rpc("increment_contributions", {"user_id": user_id}).execute()
+        print("[*] Success!")
 
-        return jsonify({
+        return _corsify_actual_response(jsonify({
             "result": result,
             "confidence": confidence,
             "severity": severity,
             "severity_metrics": severity_metrics,
             "stored": True
-        })
+        }))
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"[ERROR] {str(e)}")
+        return _corsify_actual_response(jsonify({"error": str(e)}), 500)
+
+def _build_cors_preflight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "*")
+    response.headers.add("Access-Control-Allow-Methods", "*")
+    return response
+
+def _corsify_actual_response(response, status=200):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response, status
 
 
 # ─────────────────────────────── NEW ENDPOINTS ───────────────────────────────

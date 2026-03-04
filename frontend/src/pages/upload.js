@@ -284,8 +284,17 @@ async function handleUpload(e) {
     capturedLocation = null; btn.textContent = 'Submit Report'; btn.disabled = true; btn.style.opacity = '0.5';
     acquireGPS();
   } catch (err) {
-    showAlert(err.message || 'Upload failed', 'error');
+    console.error('Upload error details:', err);
+    let msg = err.message || 'Upload failed';
+    if (msg.includes('Failed to fetch')) {
+      msg = 'Server unreachable (CORS or 502 Bad Gateway). Please check Render logs.';
+    }
+    showAlert(msg, 'error');
     const btn = document.getElementById('submitReportBtn');
-    if (btn) { btn.disabled = false; btn.textContent = 'Submit Report'; btn.style.opacity = '1'; }
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Submit Report';
+      btn.style.opacity = '1';
+    }
   }
 }
