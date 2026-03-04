@@ -63,7 +63,9 @@ export function renderUploadPage(container) {
   placeholder.id = 'cameraPlaceholder';
   placeholder.style.cssText = 'text-align:center;padding:2rem;';
   placeholder.innerHTML = `
-    <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.3;">📷</div>
+    <div style="margin-bottom:0.5rem;opacity:0.3;color:var(--text-tertiary);">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
     <p style="font-size:0.85rem;color:var(--text-secondary);margin:0;">Tap "Open Camera" to begin</p>
   `;
 

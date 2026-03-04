@@ -101,6 +101,7 @@ async function displayContributions(user) {
       const box = document.createElement("div");
       box.style.cssText = `
         background:var(--bg-surface);border:1px solid var(--border);
+        border-left:2px solid ${color};
         border-radius:var(--radius-l);padding:1rem;text-align:center;
       `;
       box.innerHTML = `
@@ -188,8 +189,8 @@ function showReportModal(pothole, index) {
   `;
 
   const modal = document.createElement("div");
+  modal.className = 'glass-modal';
   modal.style.cssText = `
-    background:var(--bg-surface);border:1px solid var(--border);
     border-radius:var(--radius-xl);padding:2rem;max-width:440px;width:100%;
     max-height:90vh;overflow-y:auto;position:relative;
     box-shadow:var(--shadow-xl);

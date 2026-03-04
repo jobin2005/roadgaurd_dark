@@ -528,7 +528,7 @@ function createPotholeRow(p, compact = false, index = null) {
         : `<span style="font-size:0.8rem;color:#10b981;">Fixed</span>`
       }
         <button class="viewUserBtn" data-userid="${p.user_id}"
-          style="padding:0.3rem 0.7rem;font-size:0.8rem;background:#2A2A2E;border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;color:#9A9AA0;">
+          style="padding:0.3rem 0.7rem;font-size:0.8rem;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-s);cursor:pointer;color:var(--text-secondary);min-height:auto;">
           Reporter
         </button>
       </div>
@@ -569,7 +569,7 @@ function createPotholeRow(p, compact = false, index = null) {
         : `<span style="font-size:0.75rem;color:#10b981;">Done</span>`
       }
         <button class="viewUserBtn" data-userid="${p.user_id}"
-          style="padding:0.25rem 0.55rem;font-size:0.78rem;background:#2A2A2E;border:1px solid rgba(255,255,255,0.06);border-radius:6px;cursor:pointer;color:#9A9AA0;">
+          style="padding:0.25rem 0.55rem;font-size:0.78rem;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-s);cursor:pointer;color:var(--text-secondary);min-height:auto;">
           View
         </button>
         <button class="viewMapBtn" data-lat="${p.latitude}" data-lng="${p.longitude}"
@@ -625,8 +625,8 @@ function showFixModal(potholeId, lat, lng) {
   `;
 
   const modal = document.createElement('div');
+  modal.className = 'glass-modal';
   modal.style.cssText = `
-    background:var(--bg-surface);border:1px solid var(--border);
     border-radius:var(--radius-xl);padding:2rem;max-width:420px;width:100%;
     box-shadow:var(--shadow-xl);
   `;

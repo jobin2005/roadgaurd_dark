@@ -3,9 +3,8 @@ import { router } from '../router.js';
 
 export function createNavbar(activePage = '') {
   const nav = document.createElement('nav');
+  nav.className = 'glass-navbar';
   nav.style.cssText = `
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border);
     padding: 0 1.5rem;
     display: flex;
     align-items: center;

@@ -188,7 +188,7 @@ function createRouteForm() {
   gpsBtn.title = 'Use my location';
   gpsBtn.style.cssText = 'width:40px;padding:0;flex-shrink:0;font-size:0.9rem;border-radius:var(--radius-s);';
   gpsBtn.onclick = async () => {
-    gpsBtn.textContent = '⏳';
+    gpsBtn.innerHTML = '<svg class="spin-loader" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
     const loc = await getUserLocation();
     if (loc) {
       startInput.value = `${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}`;
@@ -257,7 +257,7 @@ async function handleRouteSearch(e) {
     return;
   }
 
-  btn.textContent = '⏳ Searching...';
+  btn.textContent = 'Searching...';
   btn.disabled = true;
   cardsArea.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;">Searching routes…</p>';
   document.getElementById('startJourneyBtn').style.display = 'none';
@@ -438,7 +438,8 @@ function renderRouteCards(container, startCoords, destCoords) {
       position:absolute; top:0.5rem; right:0.5rem;
       background:var(--success); color:white; font-size:0.65rem; font-weight:700;
       padding:0.15rem 0.45rem; border-radius:4px; letter-spacing:0.5px;
-    ">✓ SAFEST</span>` : '';
+      display:inline-flex; align-items:center; gap:0.25rem;
+    "><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> SAFEST</span>` : '';
 
     card.innerHTML = `
       ${badge}

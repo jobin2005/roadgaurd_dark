@@ -234,6 +234,67 @@ textarea::placeholder {
   }
 }
 
+@keyframes spinLoader {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Glassmorphism Utilities ───────────────────────────────────────────── */
+
+.glass-navbar {
+  background: rgba(23, 23, 28, 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.glass-modal {
+  background: rgba(23, 23, 28, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-toast {
+  background: rgba(23, 23, 28, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-hud {
+  background: rgba(23, 23, 28, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ── SVG Icon Utility ──────────────────────────────────────────────────── */
+
+.icon-svg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-svg svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.spin-loader {
+  animation: spinLoader 0.8s linear infinite;
+}
+
+
+
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar {

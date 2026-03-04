@@ -82,8 +82,8 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
   `;
 
     const modal = document.createElement("div");
+    modal.className = 'glass-modal';
     modal.style.cssText = `
-    background:var(--bg-surface);border:1px solid var(--border);
     border-radius:var(--radius-xl);padding:2rem;max-width:480px;width:100%;
     box-shadow:var(--shadow-xl);
   `;
@@ -172,8 +172,8 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
     };
 
     const voiceLabel = document.createElement("span");
-    voiceLabel.style.cssText = "font-size:0.88rem;font-weight:600;color:#F0F0F2;";
-    voiceLabel.textContent = "🔊 Voice Alerts";
+    voiceLabel.style.cssText = "font-size:0.88rem;font-weight:600;color:#F0F0F2;display:inline-flex;align-items:center;gap:0.4rem;";
+    voiceLabel.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Voice Alerts';
 
     const voiceHint = document.createElement("span");
     voiceHint.style.cssText = "font-size:0.72rem;color:var(--text-secondary);margin-left:auto;";
@@ -223,10 +223,10 @@ function renderJourneyUI(container, routeCoords, potholes, destination) {
     app.appendChild(createNavbar('journey'));
 
     const hud = document.createElement("div");
+    hud.className = 'glass-hud';
     hud.style.cssText = `
     display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
     padding:0.75rem 1.25rem;
-    background:var(--bg-surface);border-bottom:1px solid var(--border);
     z-index:200;position:relative;
   `;
 
@@ -338,10 +338,11 @@ function createWarningOverlay() {
 
 function createFlagPanel() {
     const panel = document.createElement("div");
+    panel.className = 'glass-modal';
     panel.style.cssText = `
     display:none;position:fixed;bottom:5rem;right:1.5rem;
-    z-index:9998;background:var(--bg-surface);
-    border:1px solid var(--border-accent);border-radius:var(--radius-l);
+    z-index:9998;
+    border-radius:var(--radius-l);
     padding:1rem 1.25rem;max-width:270px;
     box-shadow:var(--shadow-lg);
   `;
@@ -745,11 +746,13 @@ function hexToRgb(hex) {
 
 function showTemporaryToast(message, color) {
     const toast = document.createElement("div");
+    toast.className = 'glass-toast';
     toast.style.cssText = `
     position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);
-    background:${color};color:white;padding:0.6rem 1.25rem;
+    color:white;padding:0.6rem 1.25rem;
     border-radius:var(--radius-s);font-weight:600;z-index:99999;
     box-shadow:var(--shadow-md);font-size:0.85rem;
+    border-left:3px solid ${color};
   `;
     toast.textContent = message;
     document.body.appendChild(toast);
