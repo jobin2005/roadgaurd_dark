@@ -148,6 +148,41 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
         grid.appendChild(card);
     });
 
+    // ── Voice Alerts toggle ──────────────────────────────────────────────
+    const voiceRow = document.createElement("label");
+    voiceRow.style.cssText = `
+    display:flex;align-items:center;gap:0.6rem;padding:0.65rem 0.9rem;
+    background:var(--bg-raised);border:1px solid var(--border);
+    border-radius:var(--radius-m);cursor:pointer;margin-bottom:1rem;
+    transition:border-color 0.2s ease;
+  `;
+    voiceRow.onmouseenter = () => { voiceRow.style.borderColor = 'var(--accent)'; };
+    voiceRow.onmouseleave = () => { voiceRow.style.borderColor = 'var(--border)'; };
+
+    const voiceCheck = document.createElement("input");
+    voiceCheck.type = "checkbox";
+    voiceCheck.checked = voiceEnabled;
+    voiceCheck.style.cssText = `
+    width:18px;height:18px;accent-color:var(--accent);cursor:pointer;
+    border-radius:4px;flex-shrink:0;
+  `;
+    voiceCheck.onchange = () => {
+        voiceEnabled = voiceCheck.checked;
+        localStorage.setItem("rg_voiceEnabled", voiceEnabled);
+    };
+
+    const voiceLabel = document.createElement("span");
+    voiceLabel.style.cssText = "font-size:0.88rem;font-weight:600;color:#F0F0F2;";
+    voiceLabel.textContent = "🔊 Voice Alerts";
+
+    const voiceHint = document.createElement("span");
+    voiceHint.style.cssText = "font-size:0.72rem;color:var(--text-secondary);margin-left:auto;";
+    voiceHint.textContent = "Spoken pothole warnings";
+
+    voiceRow.appendChild(voiceCheck);
+    voiceRow.appendChild(voiceLabel);
+    voiceRow.appendChild(voiceHint);
+
     const startBtn = document.createElement("button");
     startBtn.textContent = "Start Journey";
     startBtn.disabled = true;
@@ -160,6 +195,12 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
 
     startBtn.onclick = () => {
         selectedVehicle = VEHICLE_PROFILES[selectedKey];
+        // Prime speech synthesis on user gesture so browsers allow it later
+        if (voiceEnabled && 'speechSynthesis' in window) {
+            const primer = new SpeechSynthesisUtterance('');
+            primer.volume = 0;
+            window.speechSynthesis.speak(primer);
+        }
         overlay.remove();
         renderJourneyUI(container, routeCoords, potholes, destination);
     };
@@ -167,6 +208,7 @@ function showVehicleSelector(container, routeCoords, potholes, destination) {
     modal.appendChild(title);
     modal.appendChild(subtitle);
     modal.appendChild(grid);
+    modal.appendChild(voiceRow);
     modal.appendChild(startBtn);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
@@ -329,6 +371,34 @@ let currentFlagPothole = null;
 let flagTimeout = null;
 let lastPos = null;
 let lastPosTime = null;
+let voiceEnabled = localStorage.getItem("rg_voiceEnabled") !== "false";
+let currentlySpeaking = false;
+
+// ── Voice Alert (TTS) ─────────────────────────────────────────────────────────
+
+function speakAlert(text) {
+    if (!voiceEnabled) return;
+    if (!('speechSynthesis' in window)) return;
+    if (currentlySpeaking) return;
+
+    try {
+        // Cancel any lingering queued utterances
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.1;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        currentlySpeaking = true;
+        utterance.onend = () => { currentlySpeaking = false; };
+        utterance.onerror = () => { currentlySpeaking = false; };
+
+        window.speechSynthesis.speak(utterance);
+    } catch (_) {
+        currentlySpeaking = false;
+    }
+}
 
 function initJourneyMap(routeCoords, potholes, destination) {
     if (!document.getElementById("journeyMap")) return;
@@ -460,6 +530,9 @@ function onPositionUpdate(pos, routeCoords, potholes, destination) {
     const effectiveSpeedMs =
         speedKmh != null && speedKmh > 1 ? speedKmh / 3.6 : 50 / 3.6;
 
+    // Collect newly-warned potholes this tick for batched voice alert
+    const newlyWarned = [];
+
     for (const pothole of potholes) {
         const pId = pothole.id;
         const distM = haversineM(lat, lng, pothole.latitude, pothole.longitude);
@@ -474,15 +547,31 @@ function onPositionUpdate(pos, routeCoords, potholes, destination) {
             const secondsToReach = distM / effectiveSpeedMs;
             if (secondsToReach <= vehicle.warningSeconds) {
                 warnedPotholes.add(pId);
-                triggerPotholeWarning(pothole, secondsToReach);
+                triggerPotholeWarning(pothole, secondsToReach, true); // suppress individual voice
+                newlyWarned.push({ pothole, secondsToReach });
             }
         }
+    }
+
+    // ── Batched voice alert ────────────────────────────────────────────
+    const voiceWorthy = newlyWarned.filter(w => w.pothole.severity !== 'low');
+    if (voiceWorthy.length > 1) {
+        // Group by severity
+        const highCount = voiceWorthy.filter(w => w.pothole.severity === 'high').length;
+        const medCount = voiceWorthy.filter(w => w.pothole.severity === 'medium').length;
+        const parts = [];
+        if (highCount > 0) parts.push(`${highCount} high severity`);
+        if (medCount > 0) parts.push(`${medCount} medium severity`);
+        speakAlert(`Warning: multiple potholes ahead. ${parts.join(' and ')}.`);
+    } else if (voiceWorthy.length === 1) {
+        const w = voiceWorthy[0];
+        speakAlert(`Warning: ${w.pothole.severity} severity pothole ahead, approximately ${Math.round(w.secondsToReach)} seconds away.`);
     }
 }
 
 // ── Warning ───────────────────────────────────────────────────────────────────
 
-function triggerPotholeWarning(pothole, secondsAway) {
+function triggerPotholeWarning(pothole, secondsAway, suppressVoice = false) {
     const overlay = document.getElementById("potholeWarning");
     const detail = document.getElementById("warningDetail");
     const vehicleEl = document.getElementById("warningVehicle");
@@ -504,6 +593,11 @@ function triggerPotholeWarning(pothole, secondsAway) {
 
     if ("vibrate" in navigator) {
         navigator.vibrate(vehicle.vibration);
+    }
+
+    // Voice alert for non-low severity (only when not batched externally)
+    if (!suppressVoice && pothole.severity !== 'low') {
+        speakAlert(`Warning: ${pothole.severity} severity pothole ahead, approximately ${Math.round(secondsAway)} seconds away.`);
     }
 
     setTimeout(() => {
@@ -605,6 +699,12 @@ function stopJourney() {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
     }
+    // Cancel any in-progress speech
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
+    currentlySpeaking = false;
+
     const warning = document.getElementById("potholeWarning");
     const flagPanel = document.getElementById("flagPanel");
     if (warning) warning.remove();

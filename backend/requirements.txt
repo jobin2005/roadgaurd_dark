@@ -4,6 +4,6 @@ pillow
 numpy<2.0.0
 supabase 
 dotenv
-tensorflow-cpu==2.15.0
+tensorflow-cpu>=2.16.1
 opencv-python-headless
 gunicorn
