@@ -174,6 +174,9 @@ async function loadAllData() {
       user_profiles: profileMap[p.user_id] || null
     }));
 
+    // Enrich potholes with district names for dashboard breakdown
+    await enrichWithDistricts(allPotholes);
+
   } catch (err) {
     console.error('Admin data load error:', err);
     showAlert('Error loading admin data: ' + err.message, 'error');
@@ -760,10 +763,66 @@ async function renderUsersList(container) {
     const tableWrap = document.createElement('div');
     tableWrap.style.cssText = 'background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-l);overflow:hidden;';
 
+    // Inject responsive style for users table
+    if (!document.getElementById('usersTableStyle')) {
+      const style = document.createElement('style');
+      style.id = 'usersTableStyle';
+      style.textContent = `
+        .users-table-header {
+          display: grid;
+          grid-template-columns: 1fr 1.5fr 80px 80px 160px 100px;
+          padding: 0.6rem 1rem;
+          background: var(--bg-raised);
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: var(--text-tertiary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          gap: 0.5rem;
+        }
+        .users-table-row {
+          display: grid;
+          grid-template-columns: 1fr 1.5fr 80px 80px 160px 100px;
+          padding: 0.65rem 1rem;
+          border-top: 1px solid var(--border);
+          font-size: 0.85rem;
+          gap: 0.5rem;
+          align-items: center;
+        }
+        @media (max-width: 700px) {
+          .users-table-header { display: none; }
+          .users-table-row {
+            grid-template-columns: 1fr;
+            gap: 0.35rem;
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+          }
+          .users-table-row .ut-label {
+            display: inline;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-right: 0.4rem;
+          }
+          .users-table-row .ut-cell { text-align: left !important; }
+          .users-table-row .ut-reports,
+          .users-table-row .ut-role { display: inline-block; margin-right: 1rem; }
+          .users-table-row .ut-inline-group {
+            display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+          }
+        }
+        @media (min-width: 701px) {
+          .users-table-row .ut-label { display: none; }
+          .users-table-row .ut-inline-group { display: contents; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
     const thead = `
-      <div style="display:grid;grid-template-columns:1fr 1.5fr 80px 80px 160px 100px;
-        padding:0.6rem 1rem;background:var(--bg-raised);
-        font-size:0.78rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;gap:0.5rem;">
+      <div class="users-table-header">
         <div>Name</div><div>Email</div><div style="text-align:center;">Reports</div>
         <div style="text-align:center;">Role</div><div>Joined</div><div>Action</div>
       </div>
@@ -772,26 +831,34 @@ async function renderUsersList(container) {
     const rows = users.map((u, i) => {
       const userReports = allPotholes.filter(p => p.user_id === u.id).length;
       return `
-        <div style="display:grid;grid-template-columns:1fr 1.5fr 80px 80px 160px 100px;
-          padding:0.65rem 1rem;border-top:1px solid var(--border);
-          font-size:0.85rem;gap:0.5rem;align-items:center;
-          background:${i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)'};">
-          <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.full_name || '—'}</div>
-          <div style="color:var(--text-secondary);font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.email}</div>
-          <div style="text-align:center;font-weight:700;color:var(--accent);">${userReports}</div>
-          <div style="text-align:center;">
-            <span style="padding:0.15rem 0.5rem;border-radius:0.3rem;font-size:0.75rem;font-weight:700;
-              background:${u.role === 'admin' ? '#8b5cf622' : 'var(--bg-raised)'};
-              color:${u.role === 'admin' ? '#8b5cf6' : 'var(--text-secondary)'};">
-              ${u.role || 'user'}
-            </span>
+        <div class="users-table-row" style="background:${i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)'};">
+          <div class="ut-cell" style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <span class="ut-label">Name:</span>${u.full_name || '—'}
           </div>
-          <div style="color:var(--text-secondary);font-size:0.8rem;">${new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-          <div>
-            <button onclick="document.getElementById('userIdInput').value='${u.id}';document.getElementById('searchUserBtn').click();"
-              style="padding:0.25rem 0.6rem;font-size:0.78rem;background:#2A2A2E;border:1px solid rgba(255,255,255,0.06);border-radius:6px;cursor:pointer;color:#9A9AA0;">
-              View →
-            </button>
+          <div class="ut-cell" style="color:var(--text-secondary);font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <span class="ut-label">Email:</span>${u.email}
+          </div>
+          <div class="ut-inline-group">
+            <div class="ut-cell ut-reports" style="text-align:center;font-weight:700;color:var(--accent);">
+              <span class="ut-label">Reports:</span>${userReports}
+            </div>
+            <div class="ut-cell ut-role" style="text-align:center;">
+              <span class="ut-label">Role:</span>
+              <span style="padding:0.15rem 0.5rem;border-radius:0.3rem;font-size:0.75rem;font-weight:700;
+                background:${u.role === 'admin' ? '#8b5cf622' : 'var(--bg-raised)'};
+                color:${u.role === 'admin' ? '#8b5cf6' : 'var(--text-secondary)'};">
+                ${u.role || 'user'}
+              </span>
+            </div>
+            <div class="ut-cell" style="color:var(--text-secondary);font-size:0.8rem;">
+              <span class="ut-label">Joined:</span>${new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </div>
+            <div class="ut-cell">
+              <button onclick="document.getElementById('userIdInput').value='${u.id}';document.getElementById('searchUserBtn').click();"
+                style="padding:0.25rem 0.6rem;font-size:0.78rem;background:#2A2A2E;border:1px solid rgba(255,255,255,0.06);border-radius:6px;cursor:pointer;color:#9A9AA0;">
+                View →
+              </button>
+            </div>
           </div>
         </div>
       `;

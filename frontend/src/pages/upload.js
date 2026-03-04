@@ -282,9 +282,9 @@ async function handleUpload(e) {
     fd.append('latitude', capturedLocation.latitude); fd.append('longitude', capturedLocation.longitude);
     fd.append('description', description);
 
-    // 60-second timeout to avoid hanging indefinitely
+    // 120-second timeout — Render free tier cold starts can take 30-60s
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     const res = await fetch(`${BACKEND_URL}/predict`, {
       method: 'POST',
