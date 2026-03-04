@@ -294,12 +294,27 @@ async function handleRouteSearch(e) {
 
     allRoutes = osrmData.routes;
 
-    // 3. Fetch potholes near start
-    const nearbyResp = await fetch(
-      `${BACKEND_URL}/potholes/nearby?lat=${startCoords.lat}&lng=${startCoords.lng}&radius_km=15`
-    );
-    const nearbyData = await nearbyResp.json();
-    const potholes = nearbyData.potholes || [];
+    // 3. Fetch potholes near start — use a timeout so routes still show
+    //    even if the backend is sleeping on Render free tier
+    let potholes = [];
+    try {
+      const potholeController = new AbortController();
+      const potholeTimeout = setTimeout(() => potholeController.abort(), 10000);
+
+      const nearbyResp = await fetch(
+        `${BACKEND_URL}/potholes/nearby?lat=${startCoords.lat}&lng=${startCoords.lng}&radius_km=15`,
+        { signal: potholeController.signal }
+      );
+      clearTimeout(potholeTimeout);
+
+      if (nearbyResp.ok) {
+        const nearbyData = await nearbyResp.json();
+        potholes = nearbyData.potholes || [];
+      }
+    } catch (potholeErr) {
+      // Backend is slow/sleeping — proceed with routes only
+      console.warn('Pothole fetch skipped (backend may be starting):', potholeErr.message);
+    }
 
     // 4. Analyse each route
     routePotholes = allRoutes.map(route => analyzePotholesOnRoute(route, potholes));
@@ -313,6 +328,10 @@ async function handleRouteSearch(e) {
 
     // 7. Draw on map
     drawRoutes(startCoords, destCoords);
+
+    if (potholes.length === 0) {
+      showAlert('Routes loaded. Pothole data may be unavailable if the server is starting up.', 'info');
+    }
 
   } catch (err) {
     console.error('Route search error:', err);
