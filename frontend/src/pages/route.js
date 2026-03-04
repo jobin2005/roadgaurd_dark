@@ -3,10 +3,9 @@ import { supabase } from '../services/supabaseClient.js';
 import { showAlert } from '../components/alert.js';
 import { routeStore } from '../services/routeStore.js';
 import { router } from '../router.js';
+import { BACKEND_URL } from '../services/apiConfig.js';
 
 const OSRM_URL = 'https://router.project-osrm.org';
-const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
-const BACKEND_URL = '/api';
 
 // Module-level state
 let routeMap = null;

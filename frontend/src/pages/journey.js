@@ -1,8 +1,8 @@
 import { createNavbar } from "../components/navbar.js";
 import { routeStore } from "../services/routeStore.js";
 import { router } from "../router.js";
+import { BACKEND_URL } from "../services/apiConfig.js";
 
-const BACKEND_URL = '/api';
 const FLAG_WINDOW_SECONDS = 60;
 
 // ── Vehicle profiles ──────────────────────────────────────────────────────────

@@ -1,10 +1,10 @@
 import { createNavbar } from '../components/navbar.js';
 import { supabase } from '../services/supabaseClient.js';
 import { showAlert } from '../components/alert.js';
+import { BACKEND_URL } from '../services/apiConfig.js';
 
 let cameraStream = null;
 let gpsWatchId = null;
-const BACKEND_URL = '/api';
 
 export function renderUploadPage(container) {
   const app = document.createElement('div');
