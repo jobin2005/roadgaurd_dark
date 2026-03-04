@@ -6,3 +6,4 @@ supabase
 dotenv
 tensorflow
 opencv-python-headless
+gunicorn
