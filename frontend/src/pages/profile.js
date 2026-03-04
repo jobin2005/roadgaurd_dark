@@ -7,8 +7,34 @@ export function renderProfilePage(container) {
   app.style.cssText = "display:flex;flex-direction:column;min-height:100vh;background:var(--bg-base);";
   app.appendChild(createNavbar('profile'));
 
+  container.innerHTML = `
+    <style>
+      .profile-layout-container {
+        flex: 1; padding: 2rem 1.5rem; max-width: 960px; margin: 0 auto; width: 100%;
+      }
+      .profile-grid {
+        display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem;
+      }
+      .stats-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;
+      }
+      .modal-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;
+      }
+      @media (max-width: 850px) {
+        .profile-grid { grid-template-columns: 1fr; }
+        .profile-layout-container { padding: 1.5rem 1rem; }
+      }
+      @media (max-width: 550px) {
+        .stats-grid { grid-template-columns: 1fr; }
+        .modal-grid { grid-template-columns: 1fr; }
+        .glass-modal { padding: 1.5rem !important; }
+      }
+    </style>
+  `;
+
   const content = document.createElement("div");
-  content.style.cssText = "flex:1;padding:2rem 1.5rem;max-width:960px;margin:0 auto;width:100%;";
+  content.className = "profile-layout-container";
 
   const header = document.createElement("div");
   header.style.cssText = "margin-bottom:2rem;";
@@ -19,7 +45,7 @@ export function renderProfilePage(container) {
 
   const grid = document.createElement("div");
   grid.id = "profileContainer";
-  grid.style.cssText = "display:grid;grid-template-columns:340px 1fr;gap:1.5rem;";
+  grid.className = "profile-grid";
 
   content.appendChild(header);
   content.appendChild(grid);
@@ -92,7 +118,7 @@ async function displayContributions(user) {
     const highCount = potholes?.filter(p => p.severity === 'high').length || 0;
 
     const statsGrid = document.createElement("div");
-    statsGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:1.5rem;";
+    statsGrid.className = "stats-grid";
     [
       ['Total', potholes?.length || 0, 'var(--accent)'],
       ['Active', active, 'var(--warning)'],
@@ -205,7 +231,7 @@ function showReportModal(pothole, index) {
     ">×</button>
     <h2 style="margin:0 0 1.25rem;font-size:1.1rem;">Report #${index + 1}</h2>
     ${pothole.image_url ? `<img src="${pothole.image_url}" style="width:100%;border-radius:var(--radius-m);margin-bottom:1.25rem;max-height:200px;object-fit:cover;">` : ''}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+    <div class="modal-grid">
       <div style="background:var(--bg-raised);border-radius:var(--radius-m);padding:0.75rem;">
         <div style="font-size:0.7rem;color:var(--text-tertiary);text-transform:uppercase;margin-bottom:0.15rem;">Status</div>
         <div style="font-weight:700;color:${statusCfg.c};font-size:0.9rem;">${statusCfg.l}</div>
