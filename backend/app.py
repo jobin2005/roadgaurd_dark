@@ -200,10 +200,14 @@ def predict():
         processed = preprocess_image(img)
 
         prediction = model.predict(processed)[0][0]
+        confidence = float(prediction)
+        result = "Pothole" if confidence > 0.5 else "No Pothole"
         print(f"[*] Prediction result: {result} ({confidence:.2%})")
 
         # If NOT pothole → just return result
         if result == "No Pothole":
+            import gc
+            gc.collect() # Try to clear memory
             return _corsify_actual_response(jsonify({
                 "result": result,
                 "confidence": confidence
@@ -247,6 +251,9 @@ def predict():
         supabase.rpc("increment_contributions", {"user_id": user_id}).execute()
         print("[*] Success!")
 
+        import gc
+        gc.collect()
+
         return _corsify_actual_response(jsonify({
             "result": result,
             "confidence": confidence,
@@ -257,6 +264,8 @@ def predict():
 
     except Exception as e:
         print(f"[ERROR] {str(e)}")
+        import gc
+        gc.collect()
         return _corsify_actual_response(jsonify({"error": str(e)}), 500)
 
 def _build_cors_preflight_response():
